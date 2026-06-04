@@ -7,7 +7,7 @@
 ### 架构
 
 - [`architecture/overview.md`](./architecture/overview.md)：系统架构、Agent 分工、Story System 设计
-- [`architecture/current-system-diagnosis.md`](./architecture/current-system-diagnosis.md)：当前系统状态诊断
+- [`archive/architecture/current-system-diagnosis.md`](./archive/architecture/current-system-diagnosis.md)：历史系统状态诊断
 
 ### 使用指南
 
@@ -29,9 +29,9 @@
 - [`research/long-term-memory-research-report.md`](./research/long-term-memory-research-report.md)：长期记忆论文与开源方案调研
 - [`research/storyteller-paper-summary.md`](./research/storyteller-paper-summary.md)：STORYTELLER 论文总结
 
-### Specs
+### 归档
 
-- [`superpowers/README.md`](./superpowers/README.md)：架构 spec 与设计文档导航
+- [`archive/superpowers/README.md`](./archive/superpowers/README.md)：历史架构 spec 与设计文档导航
 
 ## 分类原则
 
@@ -40,7 +40,7 @@
 - `operations/`：运维、发版、备份与恢复
 - `memory/`：长期记忆架构说明
 - `research/`：论文总结与外部方案调研
-- `superpowers/`：架构 spec 与设计文档
+- `archive/`：历史架构快照、spec 与设计计划
 
 ## 推荐阅读顺序
 

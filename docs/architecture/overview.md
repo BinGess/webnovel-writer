@@ -106,4 +106,4 @@ preflight / dashboard
 事件审计链不另起第二套投影循环，事件路由仅负责声明式激活 writer，
 实际执行入口仍是 `ChapterCommitService.apply_projections()`。
 
-详细设计见：`docs/architecture/story-system-phase5.md`
+详细设计见：`docs/archive/architecture/story-system-phase5.md`

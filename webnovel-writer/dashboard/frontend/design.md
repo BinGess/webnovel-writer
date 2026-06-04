@@ -1,7 +1,7 @@
 # PIXEL WRITER HUB 设计规范
 
 > Dashboard 前端设计规范，所有页面必须遵守。
-> 原型预览：`docs/architecture/dashboard-prototype.html`
+> 原型预览：`docs/archive/architecture/dashboard-prototype.html`
 
 ## 视觉风格：复古像素 / 8-bit 游戏
 

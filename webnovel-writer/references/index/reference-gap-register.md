@@ -1,7 +1,7 @@
 # Reference Gap Register
 
 > 本文件记录本轮 skills/references 重构的基线状态与确认缺口。
-> 来源：`docs/superpowers/specs/2026-04-09-skills-restructure-and-reference-gaps.md`
+> 来源：`docs/archive/superpowers/specs/2026-04-09-skills-restructure-and-reference-gaps.md`
 
 ---
 
