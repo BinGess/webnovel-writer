@@ -34,6 +34,7 @@ from typing import Dict, Any, List
 
 from .config import get_config, DataModulesConfig
 from .sql_state_manager import SQLStateManager, EntityData
+from security_utils import atomic_write_json
 
 
 def migrate_state_to_sqlite(
@@ -233,7 +234,10 @@ def migrate_state_to_sqlite(
         print(f"  ✅ 关系: {stats['relationships']} 条")
 
     # 5. 精简 state.json（移除已迁移字段）
-    if not dry_run:
+    if stats["errors"]:
+        if verbose:
+            print("\n⚠️ 存在迁移错误，已保留原字段")
+    elif not dry_run:
         if verbose:
             print(f"\n🔄 精简 state.json...")
 
@@ -254,8 +258,7 @@ def migrate_state_to_sqlite(
             "_migration_timestamp": datetime.now().isoformat()
         }
 
-        with open(state_file, 'w', encoding='utf-8') as f:
-            json.dump(slim_state, f, ensure_ascii=False, indent=2)
+        atomic_write_json(state_file, slim_state, use_lock=True)
 
         new_size = state_file.stat().st_size / 1024
         if verbose:

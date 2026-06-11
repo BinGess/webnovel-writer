@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 from pathlib import Path
 
 import pytest
@@ -71,4 +72,67 @@ def test_archive_identify_old_reviews_handles_mixed_formats(archive_env):
     results = manager.identify_old_reviews(state)
     assert len(results) == 3
     assert all(row["chapters_since_review"] >= 5 for row in results)
+
+
+def test_save_archive_uses_atomic_write_json(archive_env, monkeypatch):
+    module = _load_archive_module()
+    manager = module.ArchiveManager(project_root=archive_env)
+    calls = []
+
+    def fake_atomic_write_json(path, data, *, use_lock=True, backup=True, indent=2):
+        calls.append((path, data, use_lock, backup, indent))
+        Path(path).write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(module, "atomic_write_json", fake_atomic_write_json)
+
+    manager.save_archive(manager.characters_archive, [{"name": "李雪"}])
+
+    assert calls == [(manager.characters_archive, [{"name": "李雪"}], True, True, 2)]
+
+
+def test_restore_character_keeps_archive_when_sqlite_restore_fails(archive_env, monkeypatch):
+    module = _load_archive_module()
+    manager = module.ArchiveManager(project_root=archive_env)
+    archived = [
+        {
+            "id": "li_xue",
+            "name": "李雪",
+            "tier": "支线",
+            "archived_at": "2026-06-10T00:00:00",
+        }
+    ]
+    manager.characters_archive.write_text(json.dumps(archived, ensure_ascii=False), encoding="utf-8")
+    before = manager.characters_archive.read_text(encoding="utf-8")
+
+    def fail_restore(*args, **kwargs):
+        raise RuntimeError("sqlite down")
+
+    monkeypatch.setattr(manager._index_manager, "update_entity_field", fail_restore)
+
+    assert manager.restore_character("李雪") is False
+    assert manager.characters_archive.read_text(encoding="utf-8") == before
+
+
+def test_restore_character_deletes_archive_after_sqlite_restore_succeeds(archive_env, monkeypatch):
+    module = _load_archive_module()
+    manager = module.ArchiveManager(project_root=archive_env)
+    archived = [
+        {
+            "id": "li_xue",
+            "name": "李雪",
+            "tier": "支线",
+            "archived_at": "2026-06-10T00:00:00",
+        }
+    ]
+    manager.characters_archive.write_text(json.dumps(archived, ensure_ascii=False), encoding="utf-8")
+    calls = []
+
+    def restore_status(entity_id, field, value):
+        calls.append((entity_id, field, value))
+
+    monkeypatch.setattr(manager._index_manager, "update_entity_field", restore_status)
+
+    assert manager.restore_character("李雪") is True
+    assert calls == [("li_xue", "status", "active")]
+    assert json.loads(manager.characters_archive.read_text(encoding="utf-8")) == []
 

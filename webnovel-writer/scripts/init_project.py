@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -295,6 +296,10 @@ def init_project(
         try:
             state: Dict[str, Any] = json.loads(state_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            corrupt_path = state_path.with_name(f"state.corrupt_{timestamp}.json")
+            shutil.copy2(state_path, corrupt_path)
+            print(f"⚠️ 原 state.json 已损坏，已另存为 {corrupt_path} 供手工抢救")
             state = {}
     else:
         state = {}

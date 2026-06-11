@@ -67,6 +67,11 @@ from project_locator import resolve_project_root
 if sys.platform == "win32":
     enable_windows_utf8_stdio()
 
+
+class BackupError(RuntimeError):
+    """Git backup operation failed."""
+
+
 class GitBackupManager:
     """基于 Git 的备份管理器（支持优雅降级）"""
 
@@ -147,48 +152,77 @@ __pycache__/
             print(f"❌ Git 初始化失败: {e}")
             return False
 
-    def _run_git_command(self, args: List[str], check: bool = True) -> Tuple[bool, str]:
+    def _run_git_command(self, args: List[str], check: bool = True) -> Tuple[bool, str, str]:
         """执行 Git 命令（支持优雅降级）"""
         if not self.git_available:
-            return False, "Git 不可用"
+            return False, "", "Git 不可用"
 
         try:
             result = subprocess.run(
-                ["git"] + args,
+                ["git", *args],
                 cwd=self.project_root,
-                check=check,
                 capture_output=True,
                 text=True,
-                encoding='utf-8',
+                encoding="utf-8",
                 timeout=60
             )
-
-            return True, result.stdout
-
-        except subprocess.CalledProcessError as e:
-            return False, e.stderr
+            ok = result.returncode == 0
+            if check and not ok:
+                message = (result.stderr or result.stdout).strip()
+                raise BackupError(f"git {' '.join(args)} 失败: {message}")
+            return ok, result.stdout, result.stderr
         except subprocess.TimeoutExpired:
-            return False, "Git 命令超时"
+            if check:
+                raise BackupError(f"git {' '.join(args)} 失败: Git 命令超时")
+            return False, "", "Git 命令超时"
         except OSError as e:
-            return False, str(e)
+            if check:
+                raise BackupError(f"git {' '.join(args)} 失败: {e}")
+            return False, "", str(e)
+
+    @staticmethod
+    def _format_git_output(stdout: str, stderr: str) -> str:
+        """合并 Git 输出，优先保留 stderr 中的故障信息。"""
+        return "\n".join(part.strip() for part in (stderr, stdout) if part.strip())
 
     def _local_backup(self, chapter_num: int) -> bool:
         """本地备份（Git 不可用时的降级方案）"""
         backup_dir = self.project_root / ".webnovel" / "backups"
         backup_dir.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_name = f"ch{chapter_num:04d}_{timestamp}"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        backup_name = f"snapshot_ch{chapter_num:04d}_{timestamp}"
         backup_path = backup_dir / backup_name
 
         try:
-            # 备份 state.json
+            backup_path.mkdir(parents=True, exist_ok=True)
+            copied = []
+
+            for folder_name in ("正文", "大纲", "设定集"):
+                source_dir = self.project_root / folder_name
+                if source_dir.exists():
+                    shutil.copytree(source_dir, backup_path / folder_name)
+                    copied.append(folder_name)
+
             state_file = self.project_root / ".webnovel" / "state.json"
             if state_file.exists():
-                backup_path.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(state_file, backup_path / "state.json")
+                target_state_dir = backup_path / ".webnovel"
+                target_state_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(state_file, target_state_dir / "state.json")
+                copied.append(".webnovel/state.json")
+
+            snapshots = sorted(
+                (path for path in backup_dir.glob("snapshot_ch*") if path.is_dir()),
+                key=lambda path: path.name,
+            )
+            for old_snapshot in snapshots[:-10]:
+                shutil.rmtree(old_snapshot)
 
             print(f"✅ 本地备份完成: {backup_path}")
+            if copied:
+                print(f"📦 已备份: {', '.join(copied)}")
+            else:
+                print("⚠️  未找到正文/大纲/设定集或 state.json 可备份")
             return True
         except OSError as e:
             print(f"❌ 本地备份失败: {e}")
@@ -209,9 +243,9 @@ __pycache__/
             return self._local_backup(chapter_num)
 
         # Step 1: git add .
-        success, output = self._run_git_command(["add", "."])
+        success, stdout, stderr = self._run_git_command(["add", "."], check=False)
         if not success:
-            print(f"❌ git add 失败: {output}")
+            print(f"❌ 备份失败：git add 失败: {self._format_git_output(stdout, stderr)}")
             return False
 
         # Step 2: git commit
@@ -225,16 +259,20 @@ __pycache__/
             safe_chapter_title = sanitize_commit_message(chapter_title)
             commit_message += f": {safe_chapter_title}"
 
-        success, output = self._run_git_command(
+        success, stdout, stderr = self._run_git_command(
             ["commit", "-m", commit_message],
             check=False  # 允许"无变更"的情况
         )
+        commit_output = self._format_git_output(stdout, stderr)
 
-        if not success and "nothing to commit" in output:
-            print("⚠️  无变更，跳过提交")
+        if not success and "nothing to commit" in commit_output.lower():
+            print("⚠️  本章无变更，跳过提交")
             return True
         elif not success:
-            print(f"❌ git commit 失败: {output}")
+            print(f"❌ 备份失败：git commit 失败")
+            if commit_output:
+                print(commit_output)
+            print("💡 请先运行: git config user.name \"你的名字\" && git config user.email \"you@example.com\"")
             return False
 
         print(f"✅ Git 提交完成: {commit_message}")
@@ -245,9 +283,9 @@ __pycache__/
         # 删除旧 tag（如果存在）
         self._run_git_command(["tag", "-d", tag_name], check=False)
 
-        success, output = self._run_git_command(["tag", tag_name])
+        success, stdout, stderr = self._run_git_command(["tag", tag_name], check=False)
         if not success:
-            print(f"⚠️  创建 tag 失败（非致命）: {output}")
+            print(f"⚠️  创建 tag 失败（非致命）: {self._format_git_output(stdout, stderr)}")
         else:
             print(f"✅ Git tag 已创建: {tag_name}")
 
@@ -255,56 +293,49 @@ __pycache__/
 
     def rollback(self, chapter_num: int) -> bool:
         """
-        回滚到指定章节（Git checkout）
-
-        ⚠️ 警告：这会丢弃所有未提交的变更！
+        前滚式恢复到指定章节（在当前分支创建恢复提交）
         """
 
         tag_name = f"ch{chapter_num:04d}"
 
         print(f"🔄 正在回滚到第 {chapter_num} 章...")
-        print(f"⚠️  警告：这将丢弃所有未提交的变更！")
+        print("💾 将在当前分支创建一个恢复提交，历史不会丢失")
 
-        # 检查是否有未提交的变更
-        success, status_output = self._run_git_command(["status", "--porcelain"])
+        success, _, error = self._run_git_command(["rev-parse", "--verify", tag_name], check=False)
+        if not success:
+            print(f"❌ 备份点 {tag_name} 不存在")
+            return False
 
-        if status_output.strip():
-            print("\n⚠️  检测到未提交的变更：")
-            print(status_output)
+        success, branch, branch_error = self._run_git_command(["symbolic-ref", "--short", "HEAD"], check=False)
+        if not success or not branch.strip():
+            print(f"❌ 当前不在分支上，无法创建前滚恢复提交: {self._format_git_output(branch, branch_error)}")
+            return False
 
-            # 创建备份提交
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_branch = f"backup_before_rollback_{timestamp}"
-
-            print(f"\n💾 正在创建备份分支: {backup_branch}")
-
-            success, _ = self._run_git_command(["checkout", "-b", backup_branch])
-            if not success:
-                print("❌ 创建备份分支失败")
-                return False
-
-            success, _ = self._run_git_command(["add", "."])
-            success, _ = self._run_git_command(
-                ["commit", "-m", f"Backup before rollback to chapter {chapter_num}"]
-            )
-
-            print(f"✅ 备份分支已创建: {backup_branch}")
-
-            # 切换回 master
-            success, _ = self._run_git_command(["checkout", "master"])
-
-        # 执行回滚
-        success, output = self._run_git_command(["checkout", tag_name])
+        success, stdout, stderr = self._run_git_command(["checkout", tag_name, "--", "."], check=False)
 
         if not success:
-            print(f"❌ 回滚失败: {output}")
+            print(f"❌ 回滚失败: {self._format_git_output(stdout, stderr)}")
             print(f"💡 提示：确保 tag '{tag_name}' 存在（运行 --list 查看所有备份）")
             return False
 
-        print(f"✅ 已回滚到第 {chapter_num} 章！")
+        success, stdout, stderr = self._run_git_command(["add", "-A"], check=False)
+        if not success:
+            print(f"❌ 回滚失败: {self._format_git_output(stdout, stderr)}")
+            return False
+
+        success, stdout, stderr = self._run_git_command(
+            ["commit", "-m", f"rollback: 恢复到 {tag_name} 备份点"],
+            check=False,
+        )
+        commit_output = self._format_git_output(stdout, stderr)
+        if not success and "nothing to commit" not in commit_output.lower():
+            print(f"❌ 回滚提交失败: {commit_output}")
+            return False
+
+        print(f"✅ 已在 {branch.strip()} 分支恢复到第 {chapter_num} 章！")
         print(f"\n💡 提示:")
-        print(f"  - 所有文件（state.json + 正文/*.md）已同步回滚")
-        print(f"  - 如需恢复，运行: git checkout master")
+        print(f"  - 所有文件（state.json + 正文/*.md）已同步恢复")
+        print(f"  - 历史提交保留，可用 git log 查看恢复记录")
 
         return True
 
@@ -316,10 +347,10 @@ __pycache__/
 
         print(f"📊 对比第 {chapter_a} 章 与 第 {chapter_b} 章的差异...\n")
 
-        success, output = self._run_git_command(["diff", tag_a, tag_b, "--stat"])
+        success, output, error = self._run_git_command(["diff", tag_a, tag_b, "--stat"], check=False)
 
         if not success:
-            print(f"❌ 对比失败: {output}")
+            print(f"❌ 对比失败: {self._format_git_output(output, error)}")
             return
 
         print("📈 文件变更统计：")
@@ -327,8 +358,9 @@ __pycache__/
 
         # 显示 state.json 的详细差异
         print("\n📝 state.json 详细差异：")
-        success, state_diff = self._run_git_command(
-            ["diff", tag_a, tag_b, "--", ".webnovel/state.json"]
+        success, state_diff, _ = self._run_git_command(
+            ["diff", tag_a, tag_b, "--", ".webnovel/state.json"],
+            check=False,
         )
 
         if success and state_diff:
@@ -344,7 +376,7 @@ __pycache__/
         print("\n📚 备份列表（Git tags）：\n")
 
         # 获取所有 tags
-        success, tags_output = self._run_git_command(["tag", "-l", "ch*"])
+        success, tags_output, _ = self._run_git_command(["tag", "-l", "ch*"], check=False)
 
         if not success or not tags_output:
             print("⚠️  暂无备份")
@@ -357,8 +389,9 @@ __pycache__/
             chapter_num = int(tag[2:])
 
             # 获取该 tag 的提交信息
-            success, commit_info = self._run_git_command(
-                ["log", tag, "-1", "--format=%h %ci %s"]
+            success, commit_info, _ = self._run_git_command(
+                ["log", tag, "-1", "--format=%h %ci %s"],
+                check=False,
             )
 
             if success:
@@ -368,8 +401,9 @@ __pycache__/
 
         # 显示最近 5 次提交
         print("\n📜 最近提交历史：\n")
-        success, log_output = self._run_git_command(
-            ["log", "--oneline", "-5"]
+        success, log_output, _ = self._run_git_command(
+            ["log", "--oneline", "-5"],
+            check=False,
         )
 
         if success:
@@ -383,17 +417,17 @@ __pycache__/
         print(f"🌿 从第 {chapter_num} 章创建分支: {branch_name}")
 
         # 检查 tag 是否存在
-        success, _ = self._run_git_command(["rev-parse", tag_name], check=False)
+        success, _, _ = self._run_git_command(["rev-parse", tag_name], check=False)
 
         if not success:
             print(f"❌ Tag '{tag_name}' 不存在")
             return False
 
         # 创建分支
-        success, output = self._run_git_command(["branch", branch_name, tag_name])
+        success, output, error = self._run_git_command(["branch", branch_name, tag_name], check=False)
 
         if not success:
-            print(f"❌ 创建分支失败: {output}")
+            print(f"❌ 创建分支失败: {self._format_git_output(output, error)}")
             return False
 
         print(f"✅ 分支已创建: {branch_name}")

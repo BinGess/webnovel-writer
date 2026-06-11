@@ -119,3 +119,27 @@ def test_init_rejects_english_profile_key_before_writing_state(tmp_path, monkeyp
     assert "rules-mystery" in message
     assert "规则怪谈" in message
     assert not (project_root / ".webnovel" / "state.json").exists()
+
+
+def test_init_preserves_corrupt_state_json_before_rebuilding(tmp_path, monkeypatch, capsys):
+    import init_project as init_project_module
+
+    monkeypatch.setattr(init_project_module, "is_git_available", lambda: False)
+    project_root = tmp_path / "book"
+    state_dir = project_root / ".webnovel"
+    state_dir.mkdir(parents=True)
+    corrupt_text = '{"project_info": '
+    (state_dir / "state.json").write_text(corrupt_text, encoding="utf-8")
+
+    init_project_module.init_project(
+        str(project_root),
+        title="测试书",
+        genre="仙侠",
+        protagonist_name="陆鸣",
+        target_chapters=50,
+    )
+
+    corrupt_copies = sorted(state_dir.glob("state.corrupt_*.json"))
+    assert len(corrupt_copies) == 1
+    assert corrupt_copies[0].read_text(encoding="utf-8") == corrupt_text
+    assert "原 state.json 已损坏" in capsys.readouterr().out

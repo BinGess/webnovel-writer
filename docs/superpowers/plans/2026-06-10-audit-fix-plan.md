@@ -1,5 +1,11 @@
 # 2026-06-10 全项目审查修复计划
 
+> **状态（2026-06-11 截断）：** 本计划随 v7 绞杀式收敛（`docs/architecture/story-repo-spec-2026-06-10.md`）截断收口。
+> - **已完成并保留**：Phase 0 全部（Task 1-6，正文数据安全）+ Task 7——这是 v6 用户数据与 v7 迁移器读取的地基。
+> - **作废**：Task 8-24（Phase 1 数据链）、Task 26-27、Task 29-34——目标模块（SQLite 投影、event log、v6 提示词、dashboard、CLI 样板）在 v7 中整体删除，不再修缮。
+> - **例外保留为独立候选**：Task 25（嵌入默认出网，隐私问题，若 v6 分支再发维护版则必修）、Task 28（CI 加固，仓库层面，v7 继续复用，可随时单独做）。
+> - 分支 `fix/audit-2026-06-10` 以 Phase 0 + Task 7 收口合入 master，作为 v6 最后一批数据安全维护。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 修复 2026-06-10 深度审查发现的全部高/中危问题：数据丢失路径、数据链不一致、skill 流程死锁、隐私出网默认值与守卫绕过。
@@ -22,9 +28,9 @@
 - Modify: `webnovel-writer/scripts/backup_manager.py:150-166, 228-254`
 - Test: `webnovel-writer/scripts/tests/test_backup_manager.py`
 
-- [ ] **Step 1: 写失败测试**：在 tmp git 仓库中故意不配置 `user.name/user.email`（`git config --local --unset` 或 `-c user.useConfigOnly=true`），调用 `backup()`，断言返回失败且输出包含"备份失败"、不产生 `ch{N}` tag。
-- [ ] **Step 2: 运行确认现状是假成功**（当前会打印 ✅ 并打 tag 在旧 HEAD）。
-- [ ] **Step 3: 修复 `_run_git_command`**：`check=False` 分支改为返回 `(result.returncode == 0, stdout, stderr)`；调用方据真实退出码判断。"nothing to commit" 改为从 stdout/stderr 文本判断（当前 `:233` 的 `if not success and "nothing to commit"` 是永假死代码，一并删除重写）：
+- [x] **Step 1: 写失败测试**：在 tmp git 仓库中故意不配置 `user.name/user.email`（`git config --local --unset` 或 `-c user.useConfigOnly=true`），调用 `backup()`，断言返回失败且输出包含"备份失败"、不产生 `ch{N}` tag。
+- [x] **Step 2: 运行确认现状是假成功**（当前会打印 ✅ 并打 tag 在旧 HEAD）。
+- [x] **Step 3: 修复 `_run_git_command`**：`check=False` 分支改为返回 `(result.returncode == 0, stdout, stderr)`；调用方据真实退出码判断。"nothing to commit" 改为从 stdout/stderr 文本判断（当前 `:233` 的 `if not success and "nothing to commit"` 是永假死代码，一并删除重写）：
 
 ```python
 def _run_git_command(self, args, check=True):
@@ -38,8 +44,8 @@ def _run_git_command(self, args, check=True):
     return ok, result.stdout, result.stderr
 ```
 
-- [ ] **Step 4: `backup()` 中 commit 失败时中止**：不打 tag、返回非零、输出含修复指引（提示运行 `git config user.name/user.email`）；"nothing to commit" 视为成功但提示"本章无变更"。
-- [ ] **Step 5: 跑全部 backup 测试通过后提交** `fix: backup reports real git failures and aborts tagging`。
+- [x] **Step 4: `backup()` 中 commit 失败时中止**：不打 tag、返回非零、输出含修复指引（提示运行 `git config user.name/user.email`）；"nothing to commit" 视为成功但提示"本章无变更"。
+- [x] **Step 5: 跑全部 backup 测试通过后提交** `fix: backup reports real git failures and aborts tagging`。
 
 ### Task 2: rollback 改为前滚式恢复，去掉 detached HEAD 与硬编码 master
 
@@ -47,8 +53,8 @@ def _run_git_command(self, args, check=True):
 - Modify: `webnovel-writer/scripts/backup_manager.py:294-307`
 - Test: `webnovel-writer/scripts/tests/test_backup_manager.py`
 
-- [ ] **Step 1: 写测试**：建 tmp 仓库（默认分支命名为 `main`），打两个 ch tag，回滚到 ch1 后断言：(a) 仍在原分支（`git symbolic-ref HEAD` 成功且为 main）；(b) 工作区内容等于 ch1；(c) `git log` 多出一个"rollback"提交（历史不丢）。
-- [ ] **Step 2: 实现前滚式回滚**：
+- [x] **Step 1: 写测试**：建 tmp 仓库（默认分支命名为 `main`），打两个 ch tag，回滚到 ch1 后断言：(a) 仍在原分支（`git symbolic-ref HEAD` 成功且为 main）；(b) 工作区内容等于 ch1；(c) `git log` 多出一个"rollback"提交（历史不丢）。
+- [x] **Step 2: 实现前滚式回滚**：
 
 ```python
 def rollback(self, chapter: int) -> bool:
@@ -66,8 +72,8 @@ def rollback(self, chapter: int) -> bool:
     return True
 ```
 
-- [ ] **Step 3: 删除所有 `checkout master` 硬编码**；任何需要分支名的地方用 `git symbolic-ref --short HEAD` 探测。
-- [ ] **Step 4: 测试通过后提交** `fix: rollback is forward-only, never detaches HEAD`。
+- [x] **Step 3: 删除所有 `checkout master` 硬编码**；任何需要分支名的地方用 `git symbolic-ref --short HEAD` 探测。
+- [x] **Step 4: 测试通过后提交** `fix: rollback is forward-only, never detaches HEAD`。
 
 ### Task 3: 无 Git 时的降级备份必须覆盖正文，或醒目声明没有
 
@@ -75,9 +81,9 @@ def rollback(self, chapter: int) -> bool:
 - Modify: `webnovel-writer/scripts/backup_manager.py:175-195`
 - Test: `webnovel-writer/scripts/tests/test_backup_manager.py`
 
-- [ ] **Step 1: 写测试**：模拟 git 不可用（monkeypatch `_git_available` 为 False），项目含 `正文/第0001章-x.md`，调用 `backup()` 后断言备份目录里存在该正文文件副本。
-- [ ] **Step 2: 实现**：降级路径把 `正文/`、`大纲/`、`设定集/`、`.webnovel/state.json` 全部 `shutil.copytree/copy2` 进 `.webnovel/backups/snapshot_ch{N}_{ts}/`；输出明确列出备份了什么。保留按数量滚动清理（最多 10 个 snapshot）。
-- [ ] **Step 3: 提交** `fix: degraded backup covers manuscript files`。
+- [x] **Step 1: 写测试**：模拟 git 不可用（monkeypatch `_git_available` 为 False），项目含 `正文/第0001章-x.md`，调用 `backup()` 后断言备份目录里存在该正文文件副本。
+- [x] **Step 2: 实现**：降级路径把 `正文/`、`大纲/`、`设定集/`、`.webnovel/state.json` 全部 `shutil.copytree/copy2` 进 `.webnovel/backups/snapshot_ch{N}_{ts}/`；输出明确列出备份了什么。保留按数量滚动清理（最多 10 个 snapshot）。
+- [x] **Step 3: 提交** `fix: degraded backup covers manuscript files`。
 
 ### Task 4: init 重跑不得静默覆盖损坏的 state.json
 
@@ -85,9 +91,9 @@ def rollback(self, chapter: int) -> bool:
 - Modify: `webnovel-writer/scripts/init_project.py:294-300,366`
 - Test: `webnovel-writer/scripts/data_modules/tests/test_init_project_pruning.py`
 
-- [ ] **Step 1: 写测试**：项目里放一个非法 JSON 的 state.json，重跑 init，断言 (a) 生成 `state.corrupt_*.json` 副本且内容等于原损坏文本；(b) 输出包含警告。
-- [ ] **Step 2: 实现**：捕获 `json.JSONDecodeError` 时先 `shutil.copy2(state_path, state_path.with_name(f"state.corrupt_{ts}.json"))` 再重建，打印"⚠️ 原 state.json 已损坏，已另存为 ... 供手工抢救"。
-- [ ] **Step 3: 提交** `fix: preserve corrupt state.json before rebuilding`。
+- [x] **Step 1: 写测试**：项目里放一个非法 JSON 的 state.json，重跑 init，断言 (a) 生成 `state.corrupt_*.json` 副本且内容等于原损坏文本；(b) 输出包含警告。
+- [x] **Step 2: 实现**：捕获 `json.JSONDecodeError` 时先 `shutil.copy2(state_path, state_path.with_name(f"state.corrupt_{ts}.json"))` 再重建，打印"⚠️ 原 state.json 已损坏，已另存为 ... 供手工抢救"。
+- [x] **Step 3: 提交** `fix: preserve corrupt state.json before rebuilding`。
 
 ### Task 5: 迁移脚本带错不精简、写回原子化
 
@@ -95,9 +101,9 @@ def rollback(self, chapter: int) -> bool:
 - Modify: `webnovel-writer/scripts/data_modules/migrate_state_to_sqlite.py:235-258`
 - Test: `webnovel-writer/scripts/data_modules/tests/test_migrate_state_to_sqlite.py`
 
-- [ ] **Step 1: 写测试**：构造一条会迁移失败的实体（如非法类型触发 `stats["errors"] += 1`），跑迁移，断言 state.json 中 `entities_v3` 字段仍在、CLI 退出码非 0。
-- [ ] **Step 2: 实现**：`if stats["errors"]: 跳过步骤5精简，输出"存在迁移错误，已保留原字段"`；步骤 5 的裸 `open('w')+json.dump` 改为 `security_utils.atomic_write_json(state_path, state, use_lock=True)`。
-- [ ] **Step 3: 提交** `fix: migration never prunes state on partial failure`。
+- [x] **Step 1: 写测试**：构造一条会迁移失败的实体（如非法类型触发 `stats["errors"] += 1`），跑迁移，断言 state.json 中 `entities_v3` 字段仍在、CLI 退出码非 0。
+- [x] **Step 2: 实现**：`if stats["errors"]: 跳过步骤5精简，输出"存在迁移错误，已保留原字段"`；步骤 5 的裸 `open('w')+json.dump` 改为 `security_utils.atomic_write_json(state_path, state, use_lock=True)`。
+- [x] **Step 3: 提交** `fix: migration never prunes state on partial failure`。
 
 ### Task 6: archive_manager 原子写 + 恢复顺序反转
 
@@ -105,9 +111,9 @@ def rollback(self, chapter: int) -> bool:
 - Modify: `webnovel-writer/scripts/archive_manager.py:125-128, 494-508`
 - Test: `webnovel-writer/scripts/data_modules/tests/test_archive_manager.py`
 
-- [ ] **Step 1: `save_archive` 改用 `atomic_write_json`**（归档是数据被移出 state 后的唯一副本）。
-- [ ] **Step 2: `restore_character` 顺序反转**：先恢复 SQLite，确认成功后才从归档 JSON 删除该角色；SQLite 失败时归档保持原样并返回错误。写测试：monkeypatch SQLite 恢复抛异常，断言归档文件未被修改。
-- [ ] **Step 3: 提交** `fix: archive writes atomic, restore is delete-last`。
+- [x] **Step 1: `save_archive` 改用 `atomic_write_json`**（归档是数据被移出 state 后的唯一副本）。
+- [x] **Step 2: `restore_character` 顺序反转**：先恢复 SQLite，确认成功后才从归档 JSON 删除该角色；SQLite 失败时归档保持原样并返回错误。写测试：monkeypatch SQLite 恢复抛异常，断言归档文件未被修改。
+- [x] **Step 3: 提交** `fix: archive writes atomic, restore is delete-last`。
 
 ---
 
@@ -119,8 +125,8 @@ def rollback(self, chapter: int) -> bool:
 - Modify: `webnovel-writer/scripts/data_modules/state_manager.py:393-416, 450-451, 606-609`
 - Test: `webnovel-writer/scripts/data_modules/tests/test_state_manager_extra.py`
 
-- [ ] `_sync_to_sqlite` 失败时：`save_state` 返回值携带 `sqlite_sync_ok=False`；`process-chapter` CLI 据此 `emit_error`（退出码非 0），错误信息提示运行 `webnovel.py projections retry --chapter N` 补偿。测试：monkeypatch `_sync_pending_patches_to_sqlite` 抛异常，断言 CLI 退出非 0 且 stdout JSON 含补偿指引。
-- [ ] 提交 `fix: surface sqlite sync failures in process-chapter`。
+- [x] `_sync_to_sqlite` 失败时：`save_state` 返回值携带 `sqlite_sync_ok=False`；`process-chapter` CLI 据此 `emit_error`（退出码非 0），错误信息提示运行 `webnovel.py projections retry --chapter N` 补偿。测试：monkeypatch `_sync_pending_patches_to_sqlite` 抛异常，断言 CLI 退出非 0 且 stdout JSON 含补偿指引。
+- [x] 提交 `fix: surface sqlite sync failures in process-chapter`。
 
 ### Task 8: get_state_changes / get_relationships 走 SQLite 回退
 

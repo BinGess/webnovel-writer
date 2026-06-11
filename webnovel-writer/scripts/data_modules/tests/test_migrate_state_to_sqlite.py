@@ -172,7 +172,7 @@ def test_migrate_state_backup_and_skips(temp_project):
     assert backups
 
 
-def test_migrate_state_error_branches(tmp_path, monkeypatch):
+def test_migrate_state_error_branches(tmp_path, monkeypatch, capsys):
     cfg = DataModulesConfig.from_project_root(tmp_path)
     cfg.ensure_dirs()
     state = {
@@ -210,5 +210,51 @@ def test_migrate_state_error_branches(tmp_path, monkeypatch):
 
     monkeypatch.setattr(migrate_module, "SQLStateManager", BoomSQL)
 
-    stats = migrate_state_to_sqlite(cfg, dry_run=False, backup=False, verbose=False)
+    stats = migrate_state_to_sqlite(cfg, dry_run=False, backup=False, verbose=True)
+    output = capsys.readouterr().out
     assert stats["errors"] >= 4
+    assert "存在迁移错误，已保留原字段" in output
+
+
+def test_migrate_cli_preserves_state_fields_on_partial_failure(tmp_path, monkeypatch, capsys):
+    cfg = DataModulesConfig.from_project_root(tmp_path)
+    cfg.ensure_dirs()
+    state = {
+        "entities_v3": {"角色": {"boom": {"canonical_name": "爆"}}},
+        "alias_index": {},
+        "state_changes": [],
+        "structured_relationships": [],
+        "relationships": {},
+        "world_settings": {},
+        "plot_threads": {},
+        "review_checkpoints": [],
+        "project_info": {},
+    }
+    cfg.state_file.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+
+    class BoomSQL:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def upsert_entity(self, *args, **kwargs):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(migrate_module, "SQLStateManager", BoomSQL)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "migrate_state_to_sqlite",
+            "--project-root",
+            str(tmp_path),
+            "--no-backup",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        migrate_module.main()
+
+    assert exc.value.code == 1
+    output = json.loads(capsys.readouterr().out)
+    assert output.get("status") == "error"
+    saved = json.loads(cfg.state_file.read_text(encoding="utf-8"))
+    assert "entities_v3" in saved
