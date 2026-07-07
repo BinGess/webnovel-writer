@@ -6,15 +6,13 @@
 [![Codex](https://img.shields.io/badge/Codex-Compatible-111827.svg)](https://developers.openai.com/codex)
 [![Marketplace](https://img.shields.io/badge/Codex-Marketplace-black.svg)](.agents/plugins/marketplace.json)
 
+这个项目是基于【https://github.com/lingfengQAQ/webnovel-writer】的项目改写来的，原项目是基于claude来生成的，因为Claude经常被封禁，所以适配了使用codex来实现；
+
 一个跑在 Codex 上的长篇网文创作插件。从初始化设定、规划卷纲，到写章、审查、沉淀记忆、查询状态，再到一个只读的可视化面板——整条创作流程都给你串好了。
 
 它想解决的其实就一件事：**让 AI 写到几百章，依然记得住设定、接得住伏笔、守得住大纲。**
 
 一句话定位：这是一套面向长篇连载的一致性系统，不是写完就忘的一次性生成器。
-
-> **v7 重构 RFC 公示中**
->
-> 下一代 v7 设计已经进入公开意见征集期，欢迎在本仓库的 Discussions 留下反馈：<https://github.com/BinGess/webnovel-writer/discussions>。
 
 ## 为什么需要它
 
