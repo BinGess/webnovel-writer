@@ -660,8 +660,8 @@ def test_where_reports_empty_workspace_without_traceback(monkeypatch, tmp_path, 
 
     monkeypatch.chdir(workspace)
     monkeypatch.delenv("WEBNOVEL_PROJECT_ROOT", raising=False)
-    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
-    monkeypatch.setenv("WEBNOVEL_CLAUDE_HOME", str(tmp_path / "empty-claude-home"))
+    monkeypatch.delenv("CODEX_PROJECT_DIR", raising=False)
+    monkeypatch.setenv("WEBNOVEL_CODEX_HOME", str(tmp_path / "empty-codex-home"))
     monkeypatch.setattr(sys, "argv", ["webnovel", "where"])
 
     with pytest.raises(SystemExit) as exc:
@@ -681,8 +681,8 @@ def test_preflight_reports_empty_workspace_without_traceback(monkeypatch, tmp_pa
 
     monkeypatch.chdir(workspace)
     monkeypatch.delenv("WEBNOVEL_PROJECT_ROOT", raising=False)
-    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
-    monkeypatch.setenv("WEBNOVEL_CLAUDE_HOME", str(tmp_path / "empty-claude-home"))
+    monkeypatch.delenv("CODEX_PROJECT_DIR", raising=False)
+    monkeypatch.setenv("WEBNOVEL_CODEX_HOME", str(tmp_path / "empty-codex-home"))
     monkeypatch.setattr(sys, "argv", ["webnovel", "preflight", "--format", "json"])
 
     with pytest.raises(SystemExit) as exc:
@@ -703,8 +703,8 @@ def test_quality_trend_report_writes_to_book_root_when_input_is_workspace_root(t
     workspace_root = (tmp_path / "workspace").resolve()
     book_root = (workspace_root / "凡人资本论").resolve()
 
-    (workspace_root / ".claude").mkdir(parents=True, exist_ok=True)
-    (workspace_root / ".claude" / ".webnovel-current-project").write_text(str(book_root), encoding="utf-8")
+    (workspace_root / ".codex").mkdir(parents=True, exist_ok=True)
+    (workspace_root / ".codex" / ".webnovel-current-project").write_text(str(book_root), encoding="utf-8")
 
     (book_root / ".webnovel").mkdir(parents=True, exist_ok=True)
     (book_root / ".webnovel" / "state.json").write_text("{}", encoding="utf-8")
@@ -1063,7 +1063,7 @@ def test_webnovel_skill_flow_runs_story_contract_context_and_review_pipeline_wit
         encoding="utf-8",
     )
 
-    refs_dir = project_root / ".claude" / "references"
+    refs_dir = project_root / ".codex" / "references"
     refs_dir.mkdir(parents=True, exist_ok=True)
     (refs_dir / "genre-profiles.md").write_text("## xuanhuan\n- 升级线清晰", encoding="utf-8")
     (refs_dir / "reading-power-taxonomy.md").write_text("## xuanhuan\n- 冲突钩优先", encoding="utf-8")

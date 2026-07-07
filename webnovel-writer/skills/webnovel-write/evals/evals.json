@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "使用 /webnovel-write 写第4章。项目在 agents/evals/files/test-project/。",
+      "prompt": "使用 $webnovel-write 写第4章。项目在 agents/evals/files/test-project/。",
       "expected_output": "完成 Step 1 到 Step 6 的完整流程，由 context-agent 先生成写作任务书，再起草第4章正文，最终生成审查结果、摘要文件和状态更新",
       "files": [
         "agents/evals/files/test-project/.webnovel/state.json",
@@ -29,7 +29,7 @@
     },
     {
       "id": 2,
-      "prompt": "使用 /webnovel-write --fast 写第4章。项目在 agents/evals/files/test-project/。",
+      "prompt": "使用 $webnovel-write --fast 写第4章。项目在 agents/evals/files/test-project/。",
       "expected_output": "fast 模式跳过部分审查维度但仍完成核心流程",
       "files": [
         "agents/evals/files/test-project/.webnovel/state.json",
@@ -44,7 +44,7 @@
     },
     {
       "id": 3,
-      "prompt": "使用 /webnovel-write 写第4章。项目在 agents/evals/files/test-project/。特别注意 anti-AI：正文不应有密集的'缓缓''淡淡'副词、不应有'首先其次最后'三段式、不应有情绪标签化描写。",
+      "prompt": "使用 $webnovel-write 写第4章。项目在 agents/evals/files/test-project/。特别注意 anti-AI：正文不应有密集的'缓缓''淡淡'副词、不应有'首先其次最后'三段式、不应有情绪标签化描写。",
       "expected_output": "生成的正文 AI 味低，通过 anti-AI 检查",
       "files": [
         "agents/evals/files/test-project/.webnovel/state.json",

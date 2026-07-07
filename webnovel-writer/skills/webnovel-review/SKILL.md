@@ -1,8 +1,6 @@
 ---
 name: webnovel-review
-description: 使用审查 Agent 评估章节质量，生成报告并写回审查指标。
-allowed-tools: Read Grep Write Edit Bash Agent AskUserQuestion
-argument-hint: "[章号或范围，如 5 或 1-5]"
+description: 使用审查 subagent 评估章节质量，生成报告并写回审查指标。
 ---
 
 # Quality Review Skill
@@ -15,7 +13,7 @@ argument-hint: "[章号或范围，如 5 或 1-5]"
 
 ## 红线
 
-- 必须通过 `Agent` 工具调用 `reviewer`，禁止主流程伪造结论或口头总结代替 subagent 输出。
+- 必须显式启动 `reviewer` Codex subagent，禁止主流程伪造结论或口头总结代替 subagent 输出。
 - reviewer 只返回严格 JSON；主流程负责把返回值写入 `${PROJECT_ROOT}/.webnovel/tmp/review_results.json`，随后由 `review-pipeline` 覆盖为标准 review_result artifact。
 - 报告与 metrics 只由 `review-pipeline --save-metrics` 产出；主流程不伪造 `overall_score`。
 - 项目根不合法 / 缺 `.webnovel/state.json` / 缺待审正文 → 阻断。
@@ -25,9 +23,9 @@ argument-hint: "[章号或范围，如 5 或 1-5]"
 ### Step 1：解析项目根
 
 ```bash
-export WORKSPACE_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
-export SCRIPTS_DIR="${CLAUDE_PLUGIN_ROOT}/scripts"
-export PROJECT_ROOT="$(python "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
+export WORKSPACE_ROOT="${CODEX_PROJECT_DIR:-$PWD}"
+export SCRIPTS_DIR="${WEBNOVEL_PLUGIN_ROOT}/scripts"
+export PROJECT_ROOT="$(python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
 ```
 
 `PROJECT_ROOT` 必须包含 `.webnovel/state.json`，否则阻断。
@@ -37,9 +35,9 @@ export PROJECT_ROOT="$(python "${SCRIPTS_DIR}/webnovel.py" --project-root "${WOR
 目标章缺 runtime 合同时，先用详细大纲的真实本章目标刷新（`CHAPTER_GOAL` 禁止 `{章纲目标}` / `第N章章纲目标` 占位文本）：
 
 ```bash
-GENRE="$(python -X utf8 -c "import json; s=json.load(open('${PROJECT_ROOT}/.webnovel/state.json',encoding='utf-8')); pi=s.get('project_info',{}); print(pi.get('genre') or s.get('project',{}).get('genre',''))")"
+GENRE="$(python3 -X utf8 -c "import json; s=json.load(open('${PROJECT_ROOT}/.webnovel/state.json',encoding='utf-8')); pi=s.get('project_info',{}); print(pi.get('genre') or s.get('project',{}).get('genre',''))")"
 
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" \
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" \
   story-system "${CHAPTER_GOAL}" --genre "${GENRE}" --chapter {chapter_num} --persist --emit-runtime-contracts --format both
 ```
 
@@ -61,12 +59,12 @@ cat "${PROJECT_ROOT}/.webnovel/state.json"
 
 确认当前章节号与对应正文文件；缺正文或缺兼容状态文件立即阻断。
 
-### Step 5：调用统一审查 Agent
+### Step 5：调用统一审查 subagent
 
-必须通过 `Agent` 工具调用 `reviewer`。审查方法与维度细则由 reviewer 自带，本 Skill 不展开。
+必须显式启动 `reviewer` Codex subagent。审查方法与维度细则由 reviewer 自带，本 Skill 不展开。
 
 ```text
-Use the Agent tool to run `webnovel-writer:reviewer`.
+Spawn Codex custom agent `webnovel-reviewer`; use `${WEBNOVEL_PLUGIN_ROOT}/agents/reviewer.md` as the role contract if the custom agent is unavailable.
 
 Prompt: chapter={chapter_num}; chapter_file={chapter_file}; project_root=${PROJECT_ROOT}; scripts_dir=${SCRIPTS_DIR}。严格输出 reviewer schema JSON，不评分，不口头总结。
 ```
@@ -93,7 +91,7 @@ reviewer 跳过、失败、输出不完整、正文为空、维度跳过、block
 ### Step 6：生成报告并落库
 
 ```bash
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" review-pipeline \
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" review-pipeline \
   --chapter {chapter_num} \
   --review-results "${PROJECT_ROOT}/.webnovel/tmp/review_results.json" \
   --metrics-out "${PROJECT_ROOT}/.webnovel/tmp/review_metrics.json" \
@@ -106,14 +104,14 @@ python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" rev
 ### Step 7：写入兼容审查记录
 
 ```bash
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" update-state -- --add-review "{chapter_num}-{chapter_num}" "审查报告/第{chapter_num}章审查报告.md"
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" update-state -- --add-review "{chapter_num}-{chapter_num}" "审查报告/第{chapter_num}章审查报告.md"
 ```
 
 兼容投影 / read model，不是写后事实真源。
 
 ### Step 8：处理阻断
 
-存在任意 `blocking=true` 问题时，用 `AskUserQuestion` 让用户裁决：
+存在任意 `blocking=true` 问题时，用普通对话向用户给出有限选项并等待裁决：
 
 - 立即修复：输出返工清单，仅在用户明确授权下做最小修改。
 - 仅保存报告，稍后处理：保留报告与指标记录，结束流程。
@@ -131,7 +129,7 @@ python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" update-stat
 审查开始前先说明本次会经历：定位待审正文 -> 刷新缺失合同 -> 写作检查 -> 生成报告和指标 -> 处理阻断裁决。过程提示用作者语言，不直接输出原始 JSON、traceback 或长命令日志；技术详情写入 `.webnovel/logs/run_last.log`：
 
 ```bash
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" run-log \
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" run-log \
   --event review-progress \
   --payload-json "{\"stage\": \"review\", \"chapter\": {chapter_num}}" \
   --format text
@@ -139,12 +137,12 @@ python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" run
 
 过程提示每次不超过两行，只说当前动作和影响，例如“正在生成审查报告：会把阻断问题和最值得改的建议放到顶部”。少打扰确认策略：无阻断时不询问；存在 blocking issue、缺待审正文、用户要求是否立即修改时才询问。
 
-需要用户裁决时使用有限选项，并说明影响；例如立即修复 / 仅保存报告稍后处理 / 放弃本次审查。卡住时必须说明卡点、已完成内容和恢复建议，例如“reviewer 结果已保存，metrics 落库失败；重新运行 `/webnovel-review {chapter_num}` 会从报告落库继续”。
+需要用户裁决时使用有限选项，并说明影响；例如立即修复 / 仅保存报告稍后处理 / 放弃本次审查。卡住时必须说明卡点、已完成内容和恢复建议，例如“reviewer 结果已保存，metrics 落库失败；重新运行 `$webnovel-review {chapter_num}` 会从报告落库继续”。
 
 不可恢复故障才在最终报告提示 `.webnovel/logs/run_last.log`；平时只保留日志，不打扰作者。收尾必须调用作者报告 helper：
 
 ```bash
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" user-report \
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" user-report \
   --stage review \
   --chapter {chapter_num} \
   --format text
@@ -192,7 +190,7 @@ python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" use
 
 ```text
 - 审查无阻断，可以继续写下一章：
-  /webnovel-write {next_chapter}
+  $webnovel-write {next_chapter}
 ```
 
-不写 token 统计；如需排查故障，只给日志路径或建议运行 `/webnovel-doctor`。
+不写 token 统计；如需排查故障，只给日志路径或建议运行 `$webnovel-doctor`。

@@ -1,0 +1,8 @@
+name = "webnovel-context-agent"
+description = "写前 research，读取 Story System、记忆和索引，输出五段写作任务书。"
+developer_instructions = """
+You are the webnovel-writer context-agent.
+Follow the role, boundaries, tools, and output contract in webnovel-writer/agents/context-agent.md exactly.
+Return only the five-part writing brief requested by the caller. Do not write files.
+"""
+

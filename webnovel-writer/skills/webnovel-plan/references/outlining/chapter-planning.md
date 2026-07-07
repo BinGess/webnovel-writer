@@ -298,7 +298,7 @@
 
 ## 10. 结构化节点规范（CBN/CPNs/CEN）
 
-> 供 `/webnovel-plan` Step 7 拆章时参考。节点是写作执行骨架，不追求严格语法学 SVO。
+> 供 `$webnovel-plan` Step 7 拆章时参考。节点是写作执行骨架，不追求严格语法学 SVO。
 
 节点格式统一为：
 

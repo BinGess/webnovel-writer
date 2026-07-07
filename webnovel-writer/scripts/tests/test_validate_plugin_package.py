@@ -22,19 +22,20 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def _write_minimal_package(root: Path, *, plugin_version: str = "1.2.3", marketplace_version: str = "1.2.3") -> None:
+def _write_minimal_package(root: Path, *, plugin_version: str = "1.2.3") -> None:
     _write_json(
-        root / "webnovel-writer" / ".claude-plugin" / "plugin.json",
+        root / "webnovel-writer" / ".codex-plugin" / "plugin.json",
         {"name": "webnovel-writer", "version": plugin_version, "description": "desc"},
     )
     _write_json(
-        root / ".claude-plugin" / "marketplace.json",
+        root / ".agents" / "plugins" / "marketplace.json",
         {
             "plugins": [
                 {
                     "name": "webnovel-writer",
-                    "version": marketplace_version,
-                    "source": "./webnovel-writer",
+                    "source": {"source": "local", "path": "./webnovel-writer"},
+                    "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+                    "category": "Productivity",
                 }
             ]
         },
@@ -44,7 +45,7 @@ def _write_minimal_package(root: Path, *, plugin_version: str = "1.2.3", marketp
             [
                 "# Test",
                 "",
-                f"[![Version](https://img.shields.io/badge/version-{plugin_version}-brightgreen.svg)](.claude-plugin/marketplace.json)",
+                f"[![Version](https://img.shields.io/badge/version-{plugin_version}-brightgreen.svg)](.codex-plugin/plugin.json)",
                 "",
                 "| 版本 | 说明 |",
                 "|------|------|",
@@ -82,13 +83,17 @@ def test_validate_plugin_package_accepts_plugin_root(tmp_path):
     assert report["error_count"] == 0
 
 
-def test_validate_plugin_package_detects_version_mismatch(tmp_path):
-    _write_minimal_package(tmp_path, plugin_version="1.2.3", marketplace_version="1.2.4")
+def test_validate_plugin_package_detects_bad_marketplace_source(tmp_path):
+    _write_minimal_package(tmp_path)
+    marketplace = tmp_path / ".agents" / "plugins" / "marketplace.json"
+    payload = json.loads(marketplace.read_text(encoding="utf-8"))
+    payload["plugins"][0]["source"]["path"] = "./plugins/webnovel-writer"
+    marketplace.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
     report = validate_package(tmp_path)
 
     assert report["ok"] is False
-    assert any(item["code"] == "version.marketplace" for item in report["issues"])
+    assert any(item["code"] == "marketplace.source" for item in report["issues"])
 
 
 def test_validate_plugin_package_detects_readme_badge_mismatch(tmp_path):

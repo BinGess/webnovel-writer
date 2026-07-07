@@ -5,8 +5,8 @@ on:
     branches:
       - master
     paths:
-      - '.claude-plugin/marketplace.json'
-      - 'webnovel-writer/.claude-plugin/plugin.json'
+      - '.agents/plugins/marketplace.json'
+      - 'webnovel-writer/.codex-plugin/plugin.json'
       - 'README.md'
       - 'CHANGELOG.md'
       - 'releases/**'
@@ -46,7 +46,7 @@ jobs:
           if [ -n "$INPUT_VERSION" ]; then
             version="$INPUT_VERSION"
           else
-            version="$(python -c 'import json; from pathlib import Path; print(json.loads(Path("webnovel-writer/.claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"])')"
+            version="$(python -c 'import json; from pathlib import Path; print(json.loads(Path("webnovel-writer/.codex-plugin/plugin.json").read_text(encoding="utf-8"))["version"])')"
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Release version: $version"

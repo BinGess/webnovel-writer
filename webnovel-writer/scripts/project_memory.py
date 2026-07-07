@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Project memory writer for /webnovel-learn."""
+"""Project memory writer for $webnovel-learn."""
 from __future__ import annotations
 
 import argparse

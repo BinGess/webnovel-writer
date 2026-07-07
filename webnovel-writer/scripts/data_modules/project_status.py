@@ -42,15 +42,15 @@ def next_action_for_phase(snapshot: ProjectPhaseSnapshot) -> str:
     phase = snapshot.phase
     target = snapshot.target_chapter
     if phase == PHASE_NO_PROJECT:
-        return "run /webnovel-init or webnovel.py use <project_root>"
+        return "run $webnovel-init or webnovel.py use <project_root>"
     if phase == PHASE_INIT_SCAFFOLDED:
         return "run webnovel.py doctor --format text and fix missing init files"
     if phase == PHASE_INIT_READY:
-        return "run /webnovel-plan or refresh Story System contracts"
+        return "run $webnovel-plan or refresh Story System contracts"
     if phase == PHASE_PLAN_IN_PROGRESS:
         return f"finish planning and emit runtime contracts for chapter {target}"
     if phase == PHASE_CHAPTER_CONTRACT_READY:
-        return f"run /webnovel-write {target}"
+        return f"run $webnovel-write {target}"
     if phase == PHASE_DRAFT_IN_PROGRESS:
         return f"finish review/data artifacts for chapter {target}"
     if phase == PHASE_READY_TO_COMMIT:

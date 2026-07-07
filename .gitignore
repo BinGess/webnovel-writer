@@ -1,6 +1,12 @@
 .claude/
 .agents/
+!.agents/
+!.agents/plugins/
+!.agents/plugins/marketplace.json
 .codex/
+!.codex/
+!.codex/agents/
+!.codex/agents/*.toml
 .gemini/
 .trellis/
 AGENTS.md

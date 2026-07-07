@@ -1,8 +1,6 @@
 ---
 name: webnovel-plan
 description: 基于总纲生成卷纲、时间线和章纲，并把新增设定增量写回现有设定集。
-allowed-tools: Read Write Edit Bash AskUserQuestion
-argument-hint: "[卷号，如 1]"
 ---
 
 # Outline Planning
@@ -28,12 +26,12 @@ argument-hint: "[卷号，如 1]"
 ## 环境准备
 
 ```bash
-export WORKSPACE_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
-export SKILL_ROOT="${CLAUDE_PLUGIN_ROOT}/skills/webnovel-plan"
-export SCRIPTS_DIR="${CLAUDE_PLUGIN_ROOT}/scripts"
-export PROJECT_ROOT="$(python "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
+export WORKSPACE_ROOT="${CODEX_PROJECT_DIR:-$PWD}"
+export SKILL_ROOT="${WEBNOVEL_PLUGIN_ROOT}/skills/webnovel-plan"
+export SCRIPTS_DIR="${WEBNOVEL_PLUGIN_ROOT}/scripts"
+export PROJECT_ROOT="$(python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
 
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" placeholder-scan --format text
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" placeholder-scan --format text
 ```
 
 规划开始 / 结束都运行 `placeholder-scan`；plan 阶段发现占位先警告并补齐相关文件，进入写章前不得保留当前章相关实体的 `[待...]` / `暂名` / `{占位}`。
@@ -58,9 +56,9 @@ python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" pla
 CSV 创作参考用检索读，不 `cat` 整表：
 
 ```bash
-python -X utf8 "${SCRIPTS_DIR}/reference_search.py" --skill plan --table 爽点与节奏 --query "{卷级核心冲突}" --genre "${GENRE}"
-python -X utf8 "${SCRIPTS_DIR}/reference_search.py" --skill plan --table 桥段套路 --query "{卷级核心冲突}" --genre "${GENRE}"
-python -X utf8 "${SCRIPTS_DIR}/reference_search.py" --skill plan --table 命名规则 --query "角色命名" --genre "${GENRE}"
+python3 -X utf8 "${SCRIPTS_DIR}/reference_search.py" --skill plan --table 爽点与节奏 --query "{卷级核心冲突}" --genre "${GENRE}"
+python3 -X utf8 "${SCRIPTS_DIR}/reference_search.py" --skill plan --table 桥段套路 --query "{卷级核心冲突}" --genre "${GENRE}"
+python3 -X utf8 "${SCRIPTS_DIR}/reference_search.py" --skill plan --table 命名规则 --query "角色命名" --genre "${GENRE}"
 ```
 
 ## 执行流程
@@ -75,7 +73,7 @@ cat "$PROJECT_ROOT/.webnovel/state.json"
 cat "$PROJECT_ROOT/大纲/总纲.md"
 
 # 题材（来自 init 配置快照，后续 CSV 检索和裁决匹配依赖此值）；写后主链真源仍是 .story-system/
-GENRE="$(python -X utf8 -c "import json; s=json.load(open('${PROJECT_ROOT}/.webnovel/state.json',encoding='utf-8')); pi=s.get('project_info',{}); print(pi.get('genre') or s.get('project',{}).get('genre',''))")"
+GENRE="$(python3 -X utf8 -c "import json; s=json.load(open('${PROJECT_ROOT}/.webnovel/state.json',encoding='utf-8')); pi=s.get('project_info',{}); print(pi.get('genre') or s.get('project',{}).get('genre',''))")"
 ```
 
 按需读取设定集：`设定集/世界观.md`、`设定集/力量体系.md`、`设定集/主角卡.md`、`设定集/反派设计.md`、`.webnovel/idea_bank.json`。
@@ -89,9 +87,9 @@ for ch in $(seq $((START_CH - 5)) $((START_CH - 1))); do
 done
 
 # 核心角色当前状态 / 核心关系当前状态 / 活跃伏笔（跨卷未回收）
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" knowledge query-entity-state --entity "{protagonist_id}" --at-chapter {上一卷最后章}
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" knowledge query-relationships --entity "{protagonist_id}" --at-chapter {上一卷最后章}
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" memory-contract get-open-loops
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" knowledge query-entity-state --entity "{protagonist_id}" --at-chapter {上一卷最后章}
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" knowledge query-relationships --entity "{protagonist_id}" --at-chapter {上一卷最后章}
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" memory-contract get-open-loops
 ```
 
 ### Step 2：补齐设定基线
@@ -191,7 +189,7 @@ python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" mem
 执行最小总纲写回（只更新 `大纲/总纲.md` 的 V+1 卷名 / 核心冲突 / 卷末高潮与伏笔表，不生成下一卷详细大纲 / 节拍表 / 时间线 / 章纲）：
 
 ```bash
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "$PROJECT_ROOT" master-outline-sync \
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "$PROJECT_ROOT" master-outline-sync \
   --volume {volume_id} \
   --writeback-file "大纲/第{volume_id}卷-总纲写回.json" \
   --format text
@@ -200,7 +198,7 @@ python "${SCRIPTS_DIR}/webnovel.py" --project-root "$PROJECT_ROOT" master-outlin
 更新状态：
 
 ```bash
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "$PROJECT_ROOT" update-state -- \
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "$PROJECT_ROOT" update-state -- \
   --volume-planned {volume_id} \
   --chapters-range "{start}-{end}"
 ```
@@ -210,9 +208,9 @@ python "${SCRIPTS_DIR}/webnovel.py" --project-root "$PROJECT_ROOT" update-state 
 genre 从 `state.json` 初始化配置快照读取；写前主链真源是 `.story-system/` 合同树。必须先从详细大纲解析真实 `CHAPTER_GOAL`，禁止传 `{章纲目标}` / `第N章章纲目标` 这类占位文本。
 
 ```bash
-GENRE="$(python -X utf8 -c "import json; s=json.load(open('${PROJECT_ROOT}/.webnovel/state.json',encoding='utf-8')); pi=s.get('project_info',{}); print(pi.get('genre') or s.get('project',{}).get('genre',''))")"
+GENRE="$(python3 -X utf8 -c "import json; s=json.load(open('${PROJECT_ROOT}/.webnovel/state.json',encoding='utf-8')); pi=s.get('project_info',{}); print(pi.get('genre') or s.get('project',{}).get('genre',''))")"
 
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" story-system "${CHAPTER_GOAL}" \
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" story-system "${CHAPTER_GOAL}" \
   --genre "${GENRE}" --chapter {chapter_num} --persist --emit-runtime-contracts --format both
 ```
 
@@ -237,7 +235,7 @@ python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" sto
 规划开始前先说明本次会经历：检查总纲与设定 -> 生成节拍表 -> 生成时间线 -> 拆章纲 -> 写回新增设定 -> 刷新写作合同。过程提示用作者语言，不直接输出原始 JSON、traceback 或长命令日志；技术详情写入 `.webnovel/logs/run_last.log`：
 
 ```bash
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" run-log \
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" run-log \
   --event plan-progress \
   --payload-json "{\"stage\": \"plan\", \"volume\": {volume_id}}" \
   --format text
@@ -245,12 +243,12 @@ python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" run
 
 过程提示每次不超过两行，只说当前动作和影响，例如“正在拆本卷章纲：会把每章目标、时间锚点和禁区写清楚”。少打扰确认策略：默认继续推进；只有总纲 / 设定冲突、时间线回跳、卷末钩子取舍、需要覆盖已有规划时才询问。
 
-需要用户裁决时使用有限选项，并说明影响；例如沿用总纲 / 修改设定 / 暂停规划。卡住时必须说明卡点、已完成内容和恢复建议，例如“节拍表和时间线已保留，第 21-30 章拆分失败；重新运行 `/webnovel-plan {volume_id}` 会只重做失败批次”。
+需要用户裁决时使用有限选项，并说明影响；例如沿用总纲 / 修改设定 / 暂停规划。卡住时必须说明卡点、已完成内容和恢复建议，例如“节拍表和时间线已保留，第 21-30 章拆分失败；重新运行 `$webnovel-plan {volume_id}` 会只重做失败批次”。
 
 不可恢复故障才在最终报告提示 `.webnovel/logs/run_last.log`；平时只保留日志，不打扰作者。收尾必须调用作者报告 helper：
 
 ```bash
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" user-report \
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" user-report \
   --stage plan \
   --volume {volume_id} \
   --format text
@@ -293,7 +291,7 @@ python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" use
 
 ```text
 - 接下来可以写第一章：
-  /webnovel-write 1
+  $webnovel-write 1
 ```
 
-不写 token 统计；如需排查故障，只给日志路径或建议运行 `/webnovel-doctor`。
+不写 token 统计；如需排查故障，只给日志路径或建议运行 `$webnovel-doctor`。

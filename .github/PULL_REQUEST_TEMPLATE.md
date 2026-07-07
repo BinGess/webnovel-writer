@@ -19,11 +19,11 @@
 
 ## 影响范围
 
-- [ ] `/webnovel-init`
-- [ ] `/webnovel-plan`
-- [ ] `/webnovel-write`
-- [ ] `/webnovel-review`
-- [ ] `/webnovel-query` 或 memory
+- [ ] `$webnovel-init`
+- [ ] `$webnovel-plan`
+- [ ] `$webnovel-write`
+- [ ] `$webnovel-review`
+- [ ] `$webnovel-query` 或 memory
 - [ ] Story System / CHAPTER_COMMIT
 - [ ] RAG / reference search
 - [ ] Dashboard
@@ -58,4 +58,3 @@
 ## Release notes
 
 <!-- 面向用户写一到两句变更说明；没有则写“无”。 -->
-

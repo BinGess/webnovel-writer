@@ -1345,7 +1345,7 @@ class TestIndexManager:
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         (workspace / ".git").mkdir()
-        (workspace / ".claude").mkdir()
+        (workspace / ".codex").mkdir()
         project_root = workspace / "book"
         config = DataModulesConfig.from_project_root(project_root)
         config.ensure_dirs()

@@ -1,8 +1,8 @@
 # 命令详解
 
-## Skill 命令（在 Claude Code 中使用）
+## Skill 命令（在 Codex 中使用）
 
-### `/webnovel-init`
+### `$webnovel-init`
 
 初始化小说项目，生成目录结构、设定模板和状态文件。
 
@@ -13,58 +13,58 @@
 - `大纲/总纲.md`、`大纲/爽点规划.md`
 - `.env.example`（RAG 配置模板）
 
-### `/webnovel-plan [卷号]`
+### `$webnovel-plan [卷号]`
 
 生成卷级规划与章节大纲。
 
 ```bash
-/webnovel-plan 1
-/webnovel-plan 2-3
+$webnovel-plan 1
+$webnovel-plan 2-3
 ```
 
-### `/webnovel-write [章号]`
+### `$webnovel-write [章号]`
 
 执行完整章节创作流程（`context-agent` 先 research 并生成写作任务书 → 按任务书起草正文 → 审查 → 润色 → 数据落盘）。
 
 ```bash
-/webnovel-write 1
-/webnovel-write 45
+$webnovel-write 1
+$webnovel-write 45
 ```
 
-### `/webnovel-review [范围]`
+### `$webnovel-review [范围]`
 
 对已有章节做多维质量审查。
 
 ```bash
-/webnovel-review 1-5
-/webnovel-review 45
+$webnovel-review 1-5
+$webnovel-review 45
 ```
 
-### `/webnovel-query [关键词]`
+### `$webnovel-query [关键词]`
 
 查询角色、伏笔、节奏、状态等运行时信息。
 
 ```bash
-/webnovel-query 萧炎
-/webnovel-query 伏笔
+$webnovel-query 萧炎
+$webnovel-query 伏笔
 ```
 
-### `/webnovel-learn [内容]`
+### `$webnovel-learn [内容]`
 
 从当前会话或用户输入中提取可复用写作模式，写入项目记忆。
 
 ```bash
-/webnovel-learn "本章的危机钩设计很有效，悬念拉满"
+$webnovel-learn "本章的危机钩设计很有效，悬念拉满"
 ```
 
 产出：`.webnovel/project_memory.json`
 
-### `/webnovel-dashboard`
+### `$webnovel-dashboard`
 
 启动只读可视化面板，查看项目状态、实体关系、章节与大纲内容。
 
 ```bash
-/webnovel-dashboard
+$webnovel-dashboard
 ```
 
 说明：
@@ -72,14 +72,14 @@
 - 默认只读，不会修改项目文件
 - 前端构建产物已随插件发布，无需本地 `npm build`
 
-### `/webnovel-doctor [--chapter N] [--deep]`
+### `$webnovel-doctor [--chapter N] [--deep]`
 
 只读体检当前网文项目，检查阶段应有文件、JSON、SQLite、RAG 配置、Python 依赖与 Dashboard 产物，并给出影响和修复建议。
 
 ```bash
-/webnovel-doctor
-/webnovel-doctor --chapter 12
-/webnovel-doctor --deep
+$webnovel-doctor
+$webnovel-doctor --chapter 12
+$webnovel-doctor --deep
 ```
 
 说明：
@@ -92,12 +92,12 @@
 所有 CLI 命令的入口都是 `webnovel.py`，格式：
 
 ```bash
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" <子命令> [参数]
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" <子命令> [参数]
 ```
 
 ### 作者友好运行体验
 
-`/webnovel-init`、`/webnovel-plan`、`/webnovel-write` 和 `/webnovel-review` 结束时都会输出统一最终报告。报告不直接输出原始 JSON、traceback 或长命令日志，而是先给一句总状态，再分三段说明：产生的文件与完成情况、过程中遇到的问题与异常耗时、下一步建议。
+`$webnovel-init`、`$webnovel-plan`、`$webnovel-write` 和 `$webnovel-review` 结束时都会输出统一最终报告。报告不直接输出原始 JSON、traceback 或长命令日志，而是先给一句总状态，再分三段说明：产生的文件与完成情况、过程中遇到的问题与异常耗时、下一步建议。
 
 总状态有四种：
 
@@ -106,7 +106,7 @@ python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJE
 - **需要你处理**：系统停在安全位置，需要作者裁决创作方向、事实取舍、文件覆盖或 blocking 问题。
 - **未完成**：关键产物没有可信生成，需要按报告建议重跑或排查。
 
-长流程执行中只显示少量过程提示，说明当前阶段和会产生什么。自动补跑投影、重新 emit 缺失合同这类幂等操作不会打断作者，但会出现在最终报告里。重复执行同一条主命令时，系统会优先检查可信断点；首版断点续跑重点覆盖 `/webnovel-write`，尽量从失败点继续，而不是重写已可信完成的正文、审查、提交或备份。
+长流程执行中只显示少量过程提示，说明当前阶段和会产生什么。自动补跑投影、重新 emit 缺失合同这类幂等操作不会打断作者，但会出现在最终报告里。重复执行同一条主命令时，系统会优先检查可信断点；首版断点续跑重点覆盖 `$webnovel-write`，尽量从失败点继续，而不是重写已可信完成的正文、审查、提交或备份。
 
 ## Story System 主链
 
@@ -115,13 +115,13 @@ python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJE
 1. 生成合同
 
 ```bash
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" story-system "玄幻退婚流" --chapter 12 --persist --emit-runtime-contracts --format both
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" story-system "玄幻退婚流" --chapter 12 --persist --emit-runtime-contracts --format both
 ```
 
 2. 提交章节
 
 ```bash
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" chapter-commit \
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" chapter-commit \
   --chapter 12 \
   --review-result ".webnovel/tmp/review_results.json" \
   --fulfillment-result ".webnovel/tmp/fulfillment_result.json" \
@@ -132,7 +132,7 @@ python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJE
 3. 检查主链健康
 
 ```bash
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" preflight --format json
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" preflight --format json
 ```
 
 其中 `.story-system/` 是主链真源，`.webnovel/*` 是投影/read-model。
@@ -148,16 +148,16 @@ python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJE
 | `write-gate` | 写章自然边界校验（`prewrite` / `precommit` / `postcommit`） |
 | `projections` | 从已有 commit 补跑或重放 projection |
 | `user-report` | 渲染作者友好的最终报告，可输出 text/json |
-| `run-ledger` | 记录写章步骤状态，或生成 `/webnovel-write` 断点续跑建议 |
+| `run-ledger` | 记录写章步骤状态，或生成 `$webnovel-write` 断点续跑建议 |
 | `run-log` | 写入脱敏运行日志 `.webnovel/logs/run_last.log` |
 | `use <路径>` | 绑定当前工作区使用的书项目 |
 
 示例：
 
 ```bash
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" user-report --stage write --chapter 12 --format text
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" run-ledger write-resume --chapter 12 --format text
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" run-log --event write_failed --payload-json "{\"chapter\":12,\"reason\":\"projection timeout\"}"
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" user-report --stage write --chapter 12 --format text
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" run-ledger write-resume --chapter 12 --format text
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" run-log --event write_failed --payload-json "{\"chapter\":12,\"reason\":\"projection timeout\"}"
 ```
 
 ### 数据模块子命令
@@ -196,8 +196,8 @@ python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJE
 示例：
 
 ```bash
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" memory stats
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" memory query --category character_state --subject xiaoyan
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" memory stats
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" memory query --category character_state --subject xiaoyan
 ```
 
 ### Story System 子命令
@@ -224,9 +224,9 @@ python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJE
 示例：
 
 ```bash
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" story-system "玄幻退婚流" --persist
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" chapter-commit --chapter 12 --review-result .webnovel/tmp/review.json
-python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" story-events --health
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" story-system "玄幻退婚流" --persist
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" chapter-commit --chapter 12 --review-result .webnovel/tmp/review.json
+python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" story-events --health
 ```
 
 产物：

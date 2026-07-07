@@ -1,11 +1,9 @@
 ---
 name: webnovel-learn
 description: 从当前会话提取成功写作模式并写入 project_memory.json
-allowed-tools: Read Bash
-argument-hint: "[要记住的写作经验]"
 ---
 
-# /webnovel-learn
+# $webnovel-learn
 
 ## Project Root Guard（必须先确认）
 
@@ -13,9 +11,9 @@ argument-hint: "[要记住的写作经验]"
 - 用统一入口解析项目根，避免写错目录：
 
 ```bash
-export WORKSPACE_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
-export SCRIPTS_DIR="${CLAUDE_PLUGIN_ROOT:?}/scripts"
-export PROJECT_ROOT="$(python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
+export WORKSPACE_ROOT="${CODEX_PROJECT_DIR:-$PWD}"
+export SCRIPTS_DIR="${WEBNOVEL_PLUGIN_ROOT:?}/scripts"
+export PROJECT_ROOT="$(python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
 ```
 
 ## 目标
@@ -25,11 +23,11 @@ export PROJECT_ROOT="$(python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-roo
 ## 执行流程
 
 1. 读取 `"$PROJECT_ROOT/.webnovel/state.json"` 的 `progress.current_chapter` 作为当前章节号；缺失则用 `source_chapter: null`，不阻断。
-2. 解析用户输入（`/webnovel-learn` 后的经验文本；为空则取本次对话中用户认可的写法），归类 `pattern_type`（hook/pacing/dialogue/payoff/emotion/format/other，无法归类用 `other`）。
+2. 解析用户输入（`$webnovel-learn` 后的经验文本；为空则取本次对话中用户认可的写法），归类 `pattern_type`（hook/pacing/dialogue/payoff/emotion/format/other，无法归类用 `other`）。
 3. 调用 `project-memory add-pattern` 写入，不得手写或拼接 JSON：
 
 ```bash
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" project-memory add-pattern \
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" project-memory add-pattern \
   --pattern-type "{pattern_type}" \
   --description "{用户输入或提炼后的完整描述}" \
   --category "{分类，可空}" \

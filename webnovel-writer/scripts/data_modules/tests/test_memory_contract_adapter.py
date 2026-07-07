@@ -344,7 +344,7 @@ class TestLoadContext:
             json.dumps({"project_info": {"genre": "规则怪谈"}}, ensure_ascii=False),
             encoding="utf-8",
         )
-        refs_dir = tmp_path / ".claude" / "references"
+        refs_dir = tmp_path / ".codex" / "references"
         refs_dir.mkdir(parents=True, exist_ok=True)
         (refs_dir / "genre-profiles.md").write_text("## 规则怪谈\n- 规则优先", encoding="utf-8")
 

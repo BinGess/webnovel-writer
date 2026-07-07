@@ -17,7 +17,7 @@ git diff --stat v上一版本..HEAD
 把变化分成四类：
 
 - 给作者看的变化：写章、审查、规划、查询、恢复、文档等用户能感受到的变化。
-- 兼容性：是否需要迁移旧书项目，是否改变现有 `/webnovel-*` 命令习惯。
+- 兼容性：是否需要迁移旧书项目，是否改变现有 `$webnovel-*` 命令习惯。
 - 已知影响：跳过项、限制、需要注意的风险。
 - 给维护者：新增 CLI、schema、helper、测试、CI、内部重构。
 
@@ -46,8 +46,8 @@ python -X utf8 webnovel-writer/scripts/sync_plugin_version.py --version X.Y.Z --
 
 该命令会更新：
 
-- `webnovel-writer/.claude-plugin/plugin.json`
-- `.claude-plugin/marketplace.json`
+- `webnovel-writer/.codex-plugin/plugin.json`
+- `.agents/plugins/marketplace.json`
 - `README.md` 版本徽章
 - `README.md` 当前版本行
 
@@ -90,8 +90,8 @@ git diff --check
 
 触发文件：
 
-- `.claude-plugin/marketplace.json`
-- `webnovel-writer/.claude-plugin/plugin.json`
+- `.agents/plugins/marketplace.json`
+- `webnovel-writer/.codex-plugin/plugin.json`
 - `webnovel-writer/scripts/sync_plugin_version.py`
 - `webnovel-writer/scripts/validate_release_notes.py`
 - `README.md`

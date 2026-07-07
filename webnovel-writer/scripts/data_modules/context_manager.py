@@ -334,8 +334,8 @@ class ContextManager:
         primary_genre = genres[0]
         secondary_genres = genres[1:]
         composite = len(genres) > 1
-        profile_path = self.config.project_root / ".claude" / "references" / "genre-profiles.md"
-        taxonomy_path = self.config.project_root / ".claude" / "references" / "reading-power-taxonomy.md"
+        profile_path = self.config.project_root / ".codex" / "references" / "genre-profiles.md"
+        taxonomy_path = self.config.project_root / ".codex" / "references" / "reading-power-taxonomy.md"
 
         profile_text = profile_path.read_text(encoding="utf-8") if profile_path.exists() else ""
         taxonomy_text = taxonomy_path.read_text(encoding="utf-8") if taxonomy_path.exists() else ""

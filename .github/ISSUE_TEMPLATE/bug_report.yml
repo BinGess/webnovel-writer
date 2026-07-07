@@ -12,7 +12,7 @@ body:
     attributes:
       label: 问题概述
       description: 简短说明发生了什么。
-      placeholder: "例如：执行 /webnovel-write 12 后 review-pipeline 通过，但没有生成 CHAPTER_COMMIT。"
+      placeholder: "例如：执行 $webnovel-write 12 后 review-pipeline 通过，但没有生成 CHAPTER_COMMIT。"
     validations:
       required: true
   - type: dropdown
@@ -22,7 +22,7 @@ body:
       description: 请选择问题涉及的模块。
       multiple: true
       options:
-        - Claude Code Skill 命令
+        - Codex Skill 命令
         - Python CLI
         - Story System / CHAPTER_COMMIT
         - RAG / reference search
@@ -38,7 +38,7 @@ body:
     attributes:
       label: 触发命令或入口
       description: 是哪个命令触发了问题？
-      placeholder: "/webnovel-write 12 或 python -X utf8 ... webnovel.py preflight"
+      placeholder: "$webnovel-write 12 或 python3 -X utf8 ... webnovel.py preflight"
   - type: textarea
     id: reproduce
     attributes:
@@ -72,9 +72,9 @@ body:
       value: |
         - 操作系统：
         - Python 版本：
-        - Claude Code 版本：
+        - Codex 版本：
         - 插件版本：
-        - 安装范围：user / project
+        - 安装方式：一键脚本 / 手动 marketplace / 本地开发
     validations:
       required: true
   - type: input
@@ -91,7 +91,7 @@ body:
       label: 诊断信息
       description: 请贴出相关 preflight/status 输出。请先脱敏 API Key、私密正文和个人信息。
       placeholder: |
-        python -X utf8 "<CLAUDE_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" preflight --format json
+        python3 -X utf8 "<WEBNOVEL_PLUGIN_ROOT>/scripts/webnovel.py" --project-root "<PROJECT_ROOT>" preflight --format json
   - type: textarea
     id: files
     attributes:

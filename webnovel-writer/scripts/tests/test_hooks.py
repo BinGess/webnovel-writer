@@ -31,7 +31,7 @@ def test_hooks_json_uses_plugin_wrapper_and_plugin_root_paths():
     assert "SessionStart" in payload["hooks"]
     assert "PreToolUse" in payload["hooks"]
     serialized = json.dumps(payload, ensure_ascii=False)
-    assert "${CLAUDE_PLUGIN_ROOT}" in serialized
+    assert "${WEBNOVEL_PLUGIN_ROOT}" in serialized
     assert "C:\\Users" not in serialized
 
 
@@ -87,7 +87,7 @@ def test_guard_allows_runtime_projection_command():
         {
             "tool_name": "Bash",
             "tool_input": {
-                "command": 'python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" projections retry --chapter 3'
+                "command": 'python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" projections retry --chapter 3'
             },
         }
     )

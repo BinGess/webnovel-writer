@@ -661,7 +661,7 @@ def test_state_manager_cli_rejects_json_file_outside_resolved_book_root(tmp_path
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     (workspace / ".git").mkdir()
-    (workspace / ".claude").mkdir()
+    (workspace / ".codex").mkdir()
     project_root = workspace / "book"
     cfg = DataModulesConfig.from_project_root(project_root)
     cfg.ensure_dirs()
@@ -695,8 +695,8 @@ def test_state_manager_cli_rejects_json_file_outside_resolved_book_root(tmp_path
 
 def test_state_manager_cli_rejects_invalid_project_root(monkeypatch, tmp_path, capsys):
     monkeypatch.delenv("WEBNOVEL_PROJECT_ROOT", raising=False)
-    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
-    monkeypatch.setenv("WEBNOVEL_CLAUDE_HOME", str(tmp_path / "empty-claude-home"))
+    monkeypatch.delenv("CODEX_PROJECT_DIR", raising=False)
+    monkeypatch.setenv("WEBNOVEL_CODEX_HOME", str(tmp_path / "empty-codex-home"))
 
     (tmp_path / ".git").mkdir(parents=True, exist_ok=True)
     invalid_root = tmp_path / "not-a-project"

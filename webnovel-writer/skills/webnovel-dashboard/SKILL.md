@@ -1,7 +1,6 @@
 ---
 name: webnovel-dashboard
 description: 启动只读小说管理面板，查看项目状态、实体图谱与章节内容。
-allowed-tools: Bash Read
 ---
 
 # Webnovel Dashboard
@@ -17,21 +16,21 @@ allowed-tools: Bash Read
 ### Step 1：确认环境与模块目录
 
 ```bash
-export WORKSPACE_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
+export WORKSPACE_ROOT="${CODEX_PROJECT_DIR:-$PWD}"
 
-if [ -z "${CLAUDE_PLUGIN_ROOT}" ] || [ ! -d "${CLAUDE_PLUGIN_ROOT}/dashboard" ]; then
-  echo "ERROR: 未找到 dashboard 模块: ${CLAUDE_PLUGIN_ROOT}/dashboard" >&2
+if [ -z "${WEBNOVEL_PLUGIN_ROOT}" ] || [ ! -d "${WEBNOVEL_PLUGIN_ROOT}/dashboard" ]; then
+  echo "ERROR: 未找到 dashboard 模块: ${WEBNOVEL_PLUGIN_ROOT}/dashboard" >&2
   exit 1
 fi
 
-export DASHBOARD_DIR="${CLAUDE_PLUGIN_ROOT}/dashboard"
-export SCRIPTS_DIR="${CLAUDE_PLUGIN_ROOT}/scripts"
+export DASHBOARD_DIR="${WEBNOVEL_PLUGIN_ROOT}/dashboard"
+export SCRIPTS_DIR="${WEBNOVEL_PLUGIN_ROOT}/scripts"
 ```
 
 ### Step 2：解析项目根目录
 
 ```bash
-export PROJECT_ROOT="$(python "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
+export PROJECT_ROOT="$(python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
 echo "项目路径: ${PROJECT_ROOT}"
 ```
 
@@ -41,9 +40,9 @@ echo "项目路径: ${PROJECT_ROOT}"
 
 ```bash
 if [ -n "${PYTHONPATH:-}" ]; then
-  export PYTHONPATH="${CLAUDE_PLUGIN_ROOT}:${PYTHONPATH}"
+  export PYTHONPATH="${WEBNOVEL_PLUGIN_ROOT}:${PYTHONPATH}"
 else
-  export PYTHONPATH="${CLAUDE_PLUGIN_ROOT}"
+  export PYTHONPATH="${WEBNOVEL_PLUGIN_ROOT}"
 fi
 
 if [ ! -f "${DASHBOARD_DIR}/frontend/dist/index.html" ]; then

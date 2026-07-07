@@ -21,7 +21,7 @@ def _repo_root() -> Path:
 
 
 def _plugin_root(root: Path) -> Path:
-    if (root / ".claude-plugin" / "plugin.json").is_file():
+    if (root / ".codex-plugin" / "plugin.json").is_file():
         return root
     return root / "webnovel-writer"
 

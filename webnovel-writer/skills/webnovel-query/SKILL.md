@@ -1,8 +1,6 @@
 ---
 name: webnovel-query
 description: 查询项目设定、角色、力量体系、势力、伏笔等信息。支持紧急度分析与金手指状态查询。
-allowed-tools: Read Grep Bash
-argument-hint: "[查询词，如 角色名/伏笔/境界]"
 ---
 
 # Information Query Skill
@@ -14,14 +12,14 @@ argument-hint: "[查询词，如 角色名/伏笔/境界]"
 ## 项目根保护
 
 ```bash
-export WORKSPACE_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
-export SCRIPTS_DIR="${CLAUDE_PLUGIN_ROOT}/scripts"
-export SKILL_ROOT="${CLAUDE_PLUGIN_ROOT}/skills/webnovel-query"
-export PROJECT_ROOT="$(python "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
+export WORKSPACE_ROOT="${CODEX_PROJECT_DIR:-$PWD}"
+export SCRIPTS_DIR="${WEBNOVEL_PLUGIN_ROOT}/scripts"
+export SKILL_ROOT="${WEBNOVEL_PLUGIN_ROOT}/skills/webnovel-query"
+export PROJECT_ROOT="$(python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${WORKSPACE_ROOT}" where)"
 ```
 
 - `PROJECT_ROOT` 必须包含 `.webnovel/state.json`
-- **禁止**在 `${CLAUDE_PLUGIN_ROOT}/` 下读取或写入项目文件
+- **禁止**在 `${WEBNOVEL_PLUGIN_ROOT}/` 下读取或写入项目文件
 
 ## 查询分类 → 最窄工具
 
@@ -69,19 +67,19 @@ export PROJECT_ROOT="$(python "${SCRIPTS_DIR}/webnovel.py" --project-root "${WOR
 
 ```bash
 # 角色历史状态：某实体在指定章节时的状态
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" knowledge query-entity-state --entity "{entity_id}" --at-chapter {N}
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" knowledge query-entity-state --entity "{entity_id}" --at-chapter {N}
 
 # 实体关系：某实体在指定章节时的所有关系
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" knowledge query-relationships --entity "{entity_id}" --at-chapter {N}
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" knowledge query-relationships --entity "{entity_id}" --at-chapter {N}
 
 # 世界规则
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" memory-contract query-rules --chapter {chapter_num}
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" memory-contract query-rules --chapter {chapter_num}
 
 # 伏笔 / open loop
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" memory-contract get-open-loops
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" memory-contract get-open-loops
 
 # 仅综合 / 复杂查询：需要时间线 + 长期记忆联合时才用
-python -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" memory-contract load-context --chapter {chapter_num}
+python3 -X utf8 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" memory-contract load-context --chapter {chapter_num}
 ```
 
    静态设定（角色卡 / 力量体系 / 世界观 / 标签格式）直接用 `Grep` 定位行号再 `Read` 取片段，不经 memory-contract。

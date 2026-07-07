@@ -24,7 +24,7 @@ def _write_json(path: Path, payload: dict) -> None:
 
 def _write_release_files(root: Path, *, version: str = "1.2.3", previous_tag: str = "v1.2.2") -> None:
     _write_json(
-        root / "webnovel-writer" / ".claude-plugin" / "plugin.json",
+        root / "webnovel-writer" / ".codex-plugin" / "plugin.json",
         {"name": "webnovel-writer", "version": version, "description": "desc"},
     )
     (root / "CHANGELOG.md").write_text(

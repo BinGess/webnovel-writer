@@ -254,7 +254,7 @@ def test_context_manager_includes_story_contract_and_prewrite_validation(temp_pr
 
 
 def test_context_manager_prefers_contract_route_over_legacy_genre_profile(temp_project):
-    refs_dir = temp_project.project_root / ".claude" / "references"
+    refs_dir = temp_project.project_root / ".codex" / "references"
     refs_dir.mkdir(parents=True, exist_ok=True)
     (refs_dir / "genre-profiles.md").write_text("## 都市\n- 旧画像提示", encoding="utf-8")
     (refs_dir / "reading-power-taxonomy.md").write_text("## 都市\n- 旧分类", encoding="utf-8")
@@ -468,7 +468,7 @@ def test_context_manager_includes_reader_signal_and_genre_profile(temp_project):
 
 
 def test_context_manager_genre_section_and_refs_extraction(temp_project):
-    refs_dir = temp_project.project_root / ".claude" / "references"
+    refs_dir = temp_project.project_root / ".codex" / "references"
     refs_dir.mkdir(parents=True, exist_ok=True)
 
     (refs_dir / "genre-profiles.md").write_text(
@@ -576,7 +576,7 @@ def test_context_manager_includes_writing_guidance(temp_project):
 
 
 def test_context_manager_dynamic_weights_and_composite_genre(temp_project):
-    refs_dir = temp_project.project_root / ".claude" / "references"
+    refs_dir = temp_project.project_root / ".codex" / "references"
     refs_dir.mkdir(parents=True, exist_ok=True)
     (refs_dir / "genre-profiles.md").write_text(
         """
@@ -625,7 +625,7 @@ def test_context_manager_dynamic_weights_and_composite_genre(temp_project):
 
 
 def test_context_manager_genre_alias_guidance_and_heading_extraction(temp_project):
-    refs_dir = temp_project.project_root / ".claude" / "references"
+    refs_dir = temp_project.project_root / ".codex" / "references"
     refs_dir.mkdir(parents=True, exist_ok=True)
     (refs_dir / "genre-profiles.md").write_text(
         """
@@ -668,7 +668,7 @@ def test_context_manager_genre_alias_guidance_and_heading_extraction(temp_projec
 
 
 def test_context_manager_genre_aliases_normalized_for_profile_lookup(temp_project):
-    refs_dir = temp_project.project_root / ".claude" / "references"
+    refs_dir = temp_project.project_root / ".codex" / "references"
     refs_dir.mkdir(parents=True, exist_ok=True)
     (refs_dir / "genre-profiles.md").write_text(
         """

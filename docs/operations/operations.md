@@ -14,16 +14,16 @@
 
 | 层级 | 说明 | 示例 |
 |------|------|------|
-| `WORKSPACE_ROOT` | Claude Code 工作区根目录 | `D:\wk\novels` |
-| `.claude/` | 工作区级配置与项目指针 | `D:\wk\novels\.claude\` |
-| `PROJECT_ROOT` | 某本书的项目根目录（由 `/webnovel-init` 创建） | `D:\wk\novels\凡人资本论` |
-| `CLAUDE_PLUGIN_ROOT` | 插件缓存目录（不在项目内，由 Marketplace 安装管理） | 自动管理 |
+| `WORKSPACE_ROOT` | Codex 工作区根目录 | `D:\wk\novels` |
+| `.codex/` | 工作区级配置与项目指针 | `D:\wk\novels\.codex\` |
+| `PROJECT_ROOT` | 某本书的项目根目录（由 `$webnovel-init` 创建） | `D:\wk\novels\凡人资本论` |
+| `WEBNOVEL_PLUGIN_ROOT` | 插件缓存目录（不在项目内，由 Codex marketplace 安装管理） | 自动管理 |
 
 ### 工作区目录
 
 ```text
 workspace-root/
-├── .claude/
+├── .codex/
 │   ├── .webnovel-current-project   # 指向当前书项目根
 │   └── settings.json
 ├── 小说A/                          # PROJECT_ROOT
@@ -60,14 +60,14 @@ project-root/
 
 ### 插件目录
 
-插件安装在 Claude 插件缓存目录，不在书项目内。运行时通过 `CLAUDE_PLUGIN_ROOT` 引用：
+插件安装在 Codex 插件缓存目录，不在书项目内。运行时通过 `WEBNOVEL_PLUGIN_ROOT` 引用：
 
 ```text
-${CLAUDE_PLUGIN_ROOT}/
+${WEBNOVEL_PLUGIN_ROOT}/
 ├── skills/       # 8 个 Skill 命令定义
 ├── agents/       # 4 个 Agent 定义
 ├── scripts/      # Python 脚本与数据模块
-├── hooks/        # Claude Code 会话钩子
+├── hooks/        # 运行时守卫脚本
 ├── references/   # 参考文档（题材画像、追读力分类法等）
 ├── templates/    # 初始化模板
 ├── genres/       # 精调题材配置
@@ -79,7 +79,7 @@ ${CLAUDE_PLUGIN_ROOT}/
 当工作区指针不可用时，系统会从用户级 registry 查找 workspace → project 映射：
 
 ```text
-${CLAUDE_HOME:-~/.claude}/webnovel-writer/workspaces.json
+${WEBNOVEL_CODEX_HOME:-${CODEX_HOME:-~/.codex}/webnovel-writer}/workspaces.json
 ```
 
 ## 常用运维命令
@@ -87,9 +87,9 @@ ${CLAUDE_HOME:-~/.claude}/webnovel-writer/workspaces.json
 ### 环境预检
 
 ```bash
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${WORKSPACE_ROOT}" preflight
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${WORKSPACE_ROOT}" project-status --format summary
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${WORKSPACE_ROOT}" doctor --format text
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${WORKSPACE_ROOT}" preflight
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${WORKSPACE_ROOT}" project-status --format summary
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${WORKSPACE_ROOT}" doctor --format text
 ```
 
 `preflight` 是快速检查，`project-status` 给短状态和下一步，`doctor` 是阶段感知体检。
@@ -101,9 +101,9 @@ python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${WOR
 ### 写章关卡
 
 ```bash
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" write-gate --chapter 12 --stage prewrite --format text
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" write-gate --chapter 12 --stage precommit --format text
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" write-gate --chapter 12 --stage postcommit --format text
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" write-gate --chapter 12 --stage prewrite --format text
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" write-gate --chapter 12 --stage precommit --format text
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" write-gate --chapter 12 --stage postcommit --format text
 ```
 
 - `prewrite`：检查项目阶段、runtime contract、占位符和写前必要文件。
@@ -113,15 +113,15 @@ python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PRO
 ### 索引重建
 
 ```bash
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" index process-chapter --chapter 1
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" index stats
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" index process-chapter --chapter 1
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" index stats
 ```
 
 ### 健康报告
 
 ```bash
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" status -- --focus all
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" status -- --focus urgency
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" status -- --focus all
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" status -- --focus urgency
 ```
 
 `status` 保留宏观创作健康报告语义；需要机器可读短状态时使用 `project-status`。
@@ -129,15 +129,15 @@ python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" status -- -
 ### 向量重建
 
 ```bash
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" rag index-chapter --chapter 1
-python "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" rag stats
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" rag index-chapter --chapter 1
+python3 "${SCRIPTS_DIR}/webnovel.py" --project-root "${PROJECT_ROOT}" rag stats
 ```
 
 ### 投影补跑
 
 ```bash
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" projections retry --chapter 12 --format text
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" projections replay --from-chapter 1 --to-chapter 12 --format text
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" projections retry --chapter 12 --format text
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" projections replay --from-chapter 1 --to-chapter 12 --format text
 ```
 
 投影补跑只从已有 `.story-system/commits/*.commit.json` 读取事实，并重新生成 `.webnovel/state.json`、`index.db`、`summaries/`、`memory_scratchpad.json`、`vectors.db` 等 read-model。每次执行会追加 `.webnovel/projection_log.jsonl`。
@@ -152,10 +152,10 @@ python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PRO
 - **需要确认**：会影响创作方向、事实取舍、是否覆盖文件或断点续跑边界的问题，例如正文被手动改过、章纲更新晚于正文、本章已 accepted 后再次写章。系统应给 2-3 个有限选项。
 - **必须处理**：blocking 审查问题、关键产物缺失、commit 被拒、投影补跑仍失败等。系统停在安全位置，报告说明已完成内容、卡点和恢复建议。
 
-`/webnovel-write` 会记录写章断点，用于重跑时判断可信完成项：
+`$webnovel-write` 会记录写章断点，用于重跑时判断可信完成项：
 
 ```bash
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" run-ledger write-resume --chapter 12 --format text
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" run-ledger write-resume --chapter 12 --format text
 ```
 
 断点建议只负责判断和提示，不自动覆盖文件。凡是涉及作者手改正文、旧正文是否沿用、accepted commit 是否重做，都必须先询问。
@@ -171,10 +171,10 @@ python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PRO
 ### 测试
 
 ```bash
-pwsh "${CLAUDE_PLUGIN_ROOT}/scripts/run_tests.ps1" -Mode smoke
-pwsh "${CLAUDE_PLUGIN_ROOT}/scripts/run_tests.ps1" -Mode full
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/run_behavior_evals.py" --format text
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/validate_plugin_package.py" --format text
+pwsh "${WEBNOVEL_PLUGIN_ROOT}/scripts/run_tests.ps1" -Mode smoke
+pwsh "${WEBNOVEL_PLUGIN_ROOT}/scripts/run_tests.ps1" -Mode full
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/run_behavior_evals.py" --format text
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/validate_plugin_package.py" --format text
 ```
 
 `run_behavior_evals.py` 是快速行为契约检查；`validate_plugin_package.py` 按 plugin-dev 思路检查 manifest、Skill / Agent frontmatter、hooks wrapper、README 版本和路径可移植性。
@@ -198,7 +198,7 @@ WEBNOVEL_DISABLE_RUNTIME_GUARD_HOOK=1
 ### 健康检查
 
 ```bash
-python -X utf8 "${CLAUDE_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" story-events --health
+python3 -X utf8 "${WEBNOVEL_PLUGIN_ROOT}/scripts/webnovel.py" --project-root "${PROJECT_ROOT}" story-events --health
 ```
 
 返回字段：`sqlite_rows` / `event_files` / `ok`

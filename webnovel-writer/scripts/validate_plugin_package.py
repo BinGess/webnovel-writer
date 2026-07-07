@@ -80,7 +80,7 @@ def _marketplace_plugin(payload: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def _is_plugin_root(root: Path) -> bool:
-    return (root / ".claude-plugin" / "plugin.json").is_file()
+    return (root / ".codex-plugin" / "plugin.json").is_file()
 
 
 def _plugin_root(root: Path) -> Path:
@@ -88,16 +88,16 @@ def _plugin_root(root: Path) -> Path:
 
 
 def _repo_root(root: Path) -> Path:
-    if _is_plugin_root(root) and (root.parent / ".claude-plugin" / "marketplace.json").is_file():
+    if _is_plugin_root(root) and (root.parent / ".agents" / "plugins" / "marketplace.json").is_file():
         return root.parent
     return root
 
 
 def _check_manifest(root: Path, issues: list[dict[str, str]]) -> tuple[str, str]:
-    plugin_json = _plugin_root(root) / ".claude-plugin" / "plugin.json"
+    plugin_json = _plugin_root(root) / ".codex-plugin" / "plugin.json"
     payload, error = _load_json(plugin_json)
     if error:
-        issues.append(_issue("manifest.plugin_json", message=error, path=str(plugin_json), repair="恢复 .claude-plugin/plugin.json。"))
+        issues.append(_issue("manifest.plugin_json", message=error, path=str(plugin_json), repair="恢复 .codex-plugin/plugin.json。"))
         return "", ""
     name = str(payload.get("name") or "")
     version = str(payload.get("version") or "")
@@ -111,7 +111,7 @@ def _check_manifest(root: Path, issues: list[dict[str, str]]) -> tuple[str, str]
 
 
 def _check_marketplace(root: Path, plugin_version: str, issues: list[dict[str, str]]) -> None:
-    marketplace = _repo_root(root) / ".claude-plugin" / "marketplace.json"
+    marketplace = _repo_root(root) / ".agents" / "plugins" / "marketplace.json"
     payload, error = _load_json(marketplace)
     if error:
         severity = "warning" if _is_plugin_root(root) else "error"
@@ -129,18 +129,10 @@ def _check_marketplace(root: Path, plugin_version: str, issues: list[dict[str, s
     if plugin is None:
         issues.append(_issue("marketplace.plugin", message=f"{PLUGIN_NAME} missing from marketplace", path=str(marketplace), repair="在 plugins[] 中加入 webnovel-writer。"))
         return
-    if plugin.get("source") != "./webnovel-writer":
-        issues.append(_issue("marketplace.source", message=f"unexpected source: {plugin.get('source')}", path=str(marketplace), repair="source 应为 ./webnovel-writer。"))
-    marketplace_version = str(plugin.get("version") or "")
-    if plugin_version and marketplace_version != plugin_version:
-        issues.append(
-            _issue(
-                "version.marketplace",
-                message=f"plugin.json={plugin_version}, marketplace.json={marketplace_version}",
-                path=str(marketplace),
-                repair="运行 sync_plugin_version.py --version X.Y.Z --release-notes ...。",
-            )
-        )
+    source = plugin.get("source")
+    source_path = source.get("path") if isinstance(source, dict) else source
+    if source_path != "./webnovel-writer":
+        issues.append(_issue("marketplace.source", message=f"unexpected source path: {source_path}", path=str(marketplace), repair="source.path 应为 ./webnovel-writer。"))
 
 
 def _check_readme_version(root: Path, plugin_version: str, issues: list[dict[str, str]]) -> None:
@@ -210,7 +202,7 @@ def _check_portability(root: Path, issues: list[dict[str, str]]) -> None:
     plugin_root = _plugin_root(root)
     targets = list((plugin_root / "skills").glob("*/SKILL.md"))
     targets.extend((plugin_root / "agents").glob("*.md"))
-    targets.extend((plugin_root / ".claude-plugin").glob("*.json"))
+    targets.extend((plugin_root / ".codex-plugin").glob("*.json"))
     hooks_root = plugin_root / "hooks"
     if hooks_root.is_dir():
         targets.extend(path for path in hooks_root.rglob("*") if path.suffix in {".json", ".py", ".sh", ".md"})
@@ -226,7 +218,7 @@ def _check_portability(root: Path, issues: list[dict[str, str]]) -> None:
                     message="local absolute path found in plugin component",
                     severity="warning",
                     path=str(path),
-                    repair="插件组件内使用 ${CLAUDE_PLUGIN_ROOT} 或相对路径。",
+                    repair="插件组件内使用 ${WEBNOVEL_PLUGIN_ROOT} 或相对路径。",
                 )
             )
 

@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "使用 /webnovel-review 审查第4章（agents/evals/files/test-project/正文/第0004章-迦南学院的考验.md）。项目在 agents/evals/files/test-project/。",
+      "prompt": "使用 $webnovel-review 审查第4章（agents/evals/files/test-project/正文/第0004章-迦南学院的考验.md）。项目在 agents/evals/files/test-project/。",
       "expected_output": "生成审查报告，识别时间线等事实/一致性问题，并将审查指标写入 index.db",
       "files": [
         "agents/evals/files/test-project/正文/第0004章-迦南学院的考验.md",
