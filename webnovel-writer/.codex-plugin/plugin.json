@@ -3,10 +3,10 @@
   "version": "6.2.1",
   "description": "长篇网文创作系统（Codex skills + subagents + data chain + RAG）",
   "author": {
-    "name": "lingfengQAQ"
+    "name": "BinGess"
   },
-  "homepage": "https://github.com/lingfengQAQ/webnovel-writer",
-  "repository": "https://github.com/lingfengQAQ/webnovel-writer",
+  "homepage": "https://github.com/BinGess/webnovel-writer",
+  "repository": "https://github.com/BinGess/webnovel-writer",
   "license": "GPL-3.0",
   "keywords": [
     "webnovel",
@@ -20,13 +20,13 @@
     "displayName": "Webnovel Writer",
     "shortDescription": "长篇网文创作、审查、记忆和状态管理系统",
     "longDescription": "在 Codex 中运行的长篇网文创作系统：初始化设定、规划卷纲、写章、审查、事实提交、RAG 检索和只读 Dashboard。",
-    "developerName": "lingfengQAQ",
+    "developerName": "BinGess",
     "category": "Productivity",
     "capabilities": [
       "Interactive",
       "Write"
     ],
-    "websiteURL": "https://github.com/lingfengQAQ/webnovel-writer",
+    "websiteURL": "https://github.com/BinGess/webnovel-writer",
     "defaultPrompt": [
       "$webnovel-init 初始化一本新书",
       "$webnovel-write 1 写第 1 章",

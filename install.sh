@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="${WEBNOVEL_REPO:-lingfengQAQ/webnovel-writer}"
+REPO="${WEBNOVEL_REPO:-BinGess/webnovel-writer}"
 REF="${WEBNOVEL_REF:-main}"
 MARKETPLACE="${WEBNOVEL_MARKETPLACE:-webnovel-writer}"
 PLUGIN="${WEBNOVEL_PLUGIN:-webnovel-writer}"

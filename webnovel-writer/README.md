@@ -42,13 +42,13 @@
 推荐从仓库根目录的一键脚本安装：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/lingfengQAQ/webnovel-writer/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BinGess/webnovel-writer/main/install.sh | bash
 ```
 
 手动安装：
 
 ```bash
-codex plugin marketplace add lingfengQAQ/webnovel-writer \
+codex plugin marketplace add BinGess/webnovel-writer \
   --sparse .agents/plugins \
   --sparse webnovel-writer
 codex plugin add webnovel-writer@webnovel-writer
